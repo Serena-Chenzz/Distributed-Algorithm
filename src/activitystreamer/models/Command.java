@@ -280,13 +280,6 @@ public enum Command {
         return obj.toJSONString();
     }
     
-    @SuppressWarnings("unchecked")
-    public static String usersRegisteredList(ArrayList<User> localUserList){
-    	Gson gson = new GsonBuilder().create();
-        String obj = gson.toJson(new UserListRequest(Command.USERS_REGISTERED_LIST.toString(),localUserList));
-        return obj;
-    }
-    
     //The following methods are used to check if a command message is in a right format
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
     public static boolean checkValidCommandFormat1(JSONObject obj){

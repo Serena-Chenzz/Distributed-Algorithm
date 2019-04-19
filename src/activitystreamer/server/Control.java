@@ -163,23 +163,6 @@ public class Control extends Thread {
         // start server announce
         Thread serverAnnouce = new ServerAnnounce();
         serverAnnouce.start();
-        // start broadcasting messages
-        Thread activityServerBrd = new ActivityServerBroadcastThread();
-        activityServerBrd.start();
-        //start client broadcasting messages
-        Thread activityClientBrd = new ActivityClientBroadcastThread();
-        activityClientBrd.start();
-        //Start sending Authentication Thread
-        Thread authenticationSending = new SendingAuthenticationThread();
-        authenticationSending.start();
-        //Start sending lockRequst Thread
-        Thread lockRequestSending = new SendingLockRequestThread();
-        lockRequestSending.start();
-        
-        Thread ackMonitor = new MsgBufferActivatorThread();
-        ackMonitor.start();
-        //Start userLocalList broadcast Thread
-        new UserListBroadCastThread();
     }
     
     //Activator Methods
@@ -197,33 +180,6 @@ public class Control extends Thread {
                 }
             }
             
-        }
-    }
-    
-    //LockAckQueue methods
-    public synchronized void setLockAckQueue(Connection con, String lockRequest){
-        HashMap<Long,String> targetMap = lockAckQueue.get(con);
-        targetMap.put(System.currentTimeMillis(), lockRequest);
-    }
-    
-    public synchronized void setSuspendLockAck(Connection con, String lockRequest){
-        HashMap<Long,String> targetMap = lockAckQueue.get(con);
-        for(Long time:targetMap.keySet()){
-            if (targetMap.get(time).equals(lockRequest)){
-                targetMap.put(time, "Suspend");
-            }
-        }
-    }
-    
-    public synchronized void unsetLockAckQueue(String remoteId, String lockRequest){
-        for (Connection con: lockAckQueue.keySet()){
-            if (con.getRemoteId().equals(remoteId)){
-                HashMap<Long,String> targetMap = lockAckQueue.get(con);
-                for(Long time:targetMap.keySet()){
-                    if (targetMap.get(time).equals(lockRequest)){
-                        targetMap.put(time, "Received Ack");
-                    }
-                }}
         }
     }
     
@@ -290,15 +246,6 @@ public class Control extends Thread {
         return false;
     }
     
-    public synchronized boolean checkRegisterPendingList(String username){
-        for (User user:registerPendingList.values()){
-            if(user.getUsername().equals(username)){
-                return true;
-            }
-        }
-        return false;
-    }
-    
     public synchronized boolean removeMessageFromBufferQueue(long timestamp, String senderIp, int senderPort){
         for (Connection con: serverMsgBuffQueue.keySet()){
             if (con.getRemoteId().equals(senderIp + " " + senderPort)){
@@ -355,12 +302,7 @@ public class Control extends Thread {
             authenticationAckQueue.remove(con);
         }
     }
-    
-    public synchronized void cleanLockAckQueue(Connection con){
-        if (lockAckQueue.containsKey(con)){
-            lockAckQueue.remove(con);
-        }
-    }
+
   
     
     public synchronized void createServerConnection(String hostname, int port) {
@@ -461,11 +403,6 @@ public class Control extends Thread {
                                 
                                 log.debug("Add neighbor: " + con.getRemoteId());
                                 
-                                
-                                //Send the list of local registered users to new auth server
-                                String registerUserList = Command.usersRegisteredList(localUserList);
-                                con.writeMsg(registerUserList); 
-                                
                             }
 //                            if (con.getRemoteId().equals("10.0.0.42 3000")){
 //                                System.out.println("Here");
@@ -564,50 +501,6 @@ public class Control extends Thread {
                                 Register reg = new Register(msg, con);
                                 return reg.getCloseCon();
                             }
-                            
-                        case REGISTER_SUCCESS_BROADCAST:
-                            if (!Command.checkValidCommandFormat1(userInput)){
-                                String invalidReg = Command.createInvalidMessage("Invalid Register_Success_Broadcast Message Format");
-                                con.writeMsg(invalidReg);
-                                return true;
-                            }
-                            else{
-                                RegisterSuccessBroadcast reg = new RegisterSuccessBroadcast(msg, con);
-                                return reg.getCloseCon();
-                            }
-        
-                        case LOCK_REQUEST:
-                            if (!Command.checkLockRequest(userInput)){
-                                String invalidLoc = Command.createInvalidMessage("Invalid LockRequest Message Format");
-                                con.writeMsg(invalidLoc);
-                                return true;
-                            }
-                            else{
-                                Lock lock = new Lock(msg, con);
-                                return lock.getCloseCon();
-                            }
-        
-                        case LOCK_DENIED:
-                            if (!Command.checkLockRequest(userInput)){
-                                String invalidLocD = Command.createInvalidMessage("Invalid LockDenied Message Format");
-                                con.writeMsg(invalidLocD);
-                                return true;
-                            }
-                            else{
-                                LockDenied lockDenied = new LockDenied(msg, con);
-                                return lockDenied.getCloseCon();
-                            }
-        
-                        case LOCK_ALLOWED:
-                            if (!Command.checkLockRequest(userInput)){
-                                String invalidLocA = Command.createInvalidMessage("Invalid LockAllowed Message Format");
-                                con.writeMsg(invalidLocA);
-                                return true;
-                            }
-                            else{
-                                LockAllowed lockAllowed = new LockAllowed(msg, con);
-                                return lockAllowed.getCloseCon();
-                            }
         
                         case LOGIN:
                             if (!Command.checkValidCommandFormat1(userInput)&&!(Command.checkValidAnonyLogin(userInput))){
@@ -645,51 +538,6 @@ public class Control extends Thread {
                                 return actMess.getResponse();
                             }
                             
-                        case ACTIVITY_SERVER_BROADCAST:
-                            if (!Command.checkValidActivityServerBroadcast(userInput)){
-                                String invalidAc = Command.createInvalidMessage("Invalid ActivityServerBroadcast Message Format");
-                                con.writeMsg(invalidAc);
-                                return true;
-                            }
-                            else{
-                                ActivityServerBroadcast actBroad = new ActivityServerBroadcast(con, msg);
-                                return actBroad.getResponse();
-                            }
-                        case ACTIVITY_ACKNOWLEDGEMENT:
-                            if (!Command.checkValidActivityAcknowledgment(userInput)){
-                                String invalidAc = Command.createInvalidMessage("Invalid ActivityAcknowledgement Message Format");
-                                con.writeMsg(invalidAc);
-                                return true;
-                            }
-                            else{
-                                ActivityAcknowledgment actAck = new ActivityAcknowledgment(con, msg);
-                                return actAck.getResponse();
-                            }
-                        case USERS_REGISTERED_LIST:
-                            if (!Command.checkUsersRegisteredList(userInput)){
-                            	String invalidMsg = Command.createInvalidMessage("Invalid UsersRegisteredList Message Format");
-                                con.writeMsg(invalidMsg);
-                                return true;
-                            }
-                            else{
-                            	Gson gson = new GsonBuilder().create();
-
-                                UserListRequest jsonUserList = gson.fromJson(msg,UserListRequest.class);
-                                new UserListReview(jsonUserList.getUserList());
-                                
-                            	return false;
-                            } 
-                        case RELAY_MESSAGE:
-                            if (!Command.checkRelayMessage(userInput)){
-                                String invalidMsg = Command.createInvalidMessage("Invalid RelayMessage Message Format");
-                                con.writeMsg(invalidMsg);
-                                return true;
-                            }
-                            else{
-                                RelayMessage resRelay = new RelayMessage(msg, con);
-                                return resRelay.getCloseCon();
-                            }
-                            
                         case INVALID_MESSAGE:
                             //First, check its informarion format
                             if (!Command.checkValidCommandFormat2(userInput)){
@@ -718,16 +566,6 @@ public class Control extends Thread {
         return true;
     }
     
-    //This method is to send a relay message to a random neighbor 
-    public synchronized void sendMessageToRandomNeighbor(String msg){
-        if(neighbors.size() > 0){
-            int index = (int) (System.currentTimeMillis() % (neighbors.size()));
-            System.out.println(index);
-            Connection relayConn = neighbors.get(index);
-            relayConn.writeMsg(msg);
-        }
-    }
-    
 	public synchronized void printRegisteredUsers() {
     	usernameList.clear();
     	try {
@@ -751,59 +589,6 @@ public class Control extends Thread {
                 return true;
             }
         } 
-        return false;
-    }
-
-    //Add a user to the pending list
-    public synchronized void addUserToRegistePendingList(String username, String secret, Connection con) {
-        User pendingUser = new User(username, secret);
-        registerPendingList.put(con, pendingUser);
-
-    }
-
-    //Check whether this user is in this pending list. If so, write messages
-    public synchronized boolean changeInPendingList(String username, String secret) {
-        Iterator<Map.Entry<Connection, User>> it = registerPendingList.entrySet().iterator();
-        User targetUser = new User(username, secret);
-        while (it.hasNext()) {
-            Map.Entry<Connection, User> mentry = it.next();
-            Connection con = mentry.getKey();
-            User user = mentry.getValue();
-            if (user.equals(targetUser)) {
-                JSONObject response = Command.createRegisterSuccess(username);
-                if (checkAllLockAllowed(username)){
-                    registerPendingList.remove(con);
-                }
-                System.out.println(registerPendingList);
-                con.writeMsg(response.toJSONString());
-                // check if it needs redirect
-                if(serverLoad.checkRedirect(con)){
-                    // Close connection
-                    connectionClosed(con);
-                    con.closeCon();
-                };              
-                return true;
-            }
-        }
-        return false;
-    }
-
-    //Check whether this user is in this pending list, if so, delete it and write messages
-    public synchronized boolean deleteFromPendingList(String username, String secret) {
-        Iterator<Map.Entry<Connection, User>> it = registerPendingList.entrySet().iterator();
-        User targetUser = new User(username, secret);
-        while (it.hasNext()) {
-            Map.Entry<Connection, User> mentry = it.next();
-            Connection con = mentry.getKey();
-            User user = mentry.getValue();
-            if (user.equals(targetUser)) {
-                JSONObject response = Command.createRegisterFailed(username);
-                con.writeMsg(response.toJSONString());
-                registerPendingList.remove(con);
-                con.closeCon();
-                return true;
-            }
-        }
         return false;
     }
 
@@ -836,58 +621,6 @@ public class Control extends Thread {
             localUserList.remove(username);
         }
     }
-    
-    //Change certain connection to status 'Lock_suspend'
-    public synchronized void changeLockStatus(Connection con, String username){
-        if(connectionServers.containsKey(con.getRemoteId())){
-            connectionServers.get(con.getRemoteId()).add("LOCK_SUSPEND " + username);
-        }
-        System.out.println(connectionServers);
-    }
-    
-    //If return 0, means lock_denied. If 1,means there are some lock_suspend. If 2, means there are all lock_allowed.
-    public synchronized void addLockAllowedDenied(String remoteId1, String msg) {
-        try {
-            JSONParser parser = new JSONParser();
-            JSONObject message = (JSONObject) parser.parse(msg);
-            String command = message.get("command").toString();
-            String username = message.get("username").toString();
-            //Step 1, add this string to the connectionservers list
-            for (String remoteId : connectionServers.keySet()) {
-                if (remoteId.equals(remoteId1)) {
-                    connectionServers.get(remoteId).add(command + " " + username);
-                }
-                log.debug("Updated hashmap, Con:" + remoteId1 + " Value:" + connectionServers.get(remoteId));
-                
-            }
-            System.out.println(connectionServers);
-            
-        } catch (ParseException e) {
-            log.error(e);
-        }
-    }
-    
-    public synchronized boolean checkAllLocks(String username){
-        //Step 2, check whether all the connection return a lock allowed/lock_suspend regarding to this user
-        //lock_suspend means the connection has problem, and we don't need to wait for the response
-        for (String remoteId : connectionServers.keySet()){
-            if (!(connectionServers.get(remoteId).contains("LOCK_ALLOWED " + username))){
-                return false;
-            }
-        }
-        return true;
-        
-    }
-    
-    public synchronized boolean checkAllLockAllowed(String username){
-        for (String remoteId : connectionServers.keySet()){
-            if (!(connectionServers.get(remoteId).contains("LOCK_ALLOWED " + username))){
-                return false;
-            }
-        }
-        return true;
-        
-    }
 
     public synchronized boolean broadcast(String msg) {     
         for (Connection nei : neighbors) {
@@ -897,26 +630,7 @@ public class Control extends Thread {
         return true;
     }
     
-    public synchronized void sendBufferedUsers(){
-        //Check all users in registerPendingList
-        for (User user: registerPendingList.values()){
-            String username = user.getUsername();
-            String secret = user.getSecret();
 
-            if (Control.getInstance().checkAllLocks(username)){
-                //Writing the user info in local storage
-                Control.getInstance().addLocalUser(username, secret);
-                //If it has received all lock_allowed from its neighbors, it will continue to check whether it is inside 
-                //local register pending list.
-                if (Control.getInstance().changeInPendingList(username, secret)){
-                    //If the client is registered in this server, it will return back the message
-                    //Also, broadcast register success message to all other servers
-                    String registerSucMsg = Command.createRegisterSuccessBroadcast(username, secret).toJSONString();
-                    Control.getInstance().broadcast(registerSucMsg);
-                }
-            }
-        }
-    }
     /*
 	 * The connection has been closed by the other party.
      */
@@ -927,14 +641,11 @@ public class Control extends Thread {
             userConnections.remove(con);
             neighbors.remove(con);
             connectionServers.remove(con.getRemoteId());
-            sendBufferedUsers();
-            registerPendingList.remove(con);
             cleanMessageBufferQueue(con);
             cleanAckQueue(con);
             cleanClientMsgBuffQueue(con);
             cleanServerMsgBuffActivator(con);
             cleanAuthenticationAckQueue(con);
-            cleanLockAckQueue(con);
             activatorMonitor.remove(con);
         }
     }

@@ -1,4 +1,3 @@
-
 package activitystreamer.server.commands;
 
 
@@ -11,72 +10,67 @@ import org.json.simple.parser.ParseException;
 import activitystreamer.models.Command;
 import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
-import activitystreamer.server.Message;
 
 public class ActivityMessage {
-	
-	private boolean closeConnection=false;
-	private final Logger log = LogManager.getLogger();
 
-	@SuppressWarnings("unchecked")
+    private boolean closeConnection=false;
+    private final Logger log = LogManager.getLogger();
+
     public ActivityMessage(Connection con, String msg) {
-		
-		JSONParser parser = new JSONParser();
+
+        JSONParser parser = new JSONParser();
         JSONObject message;
         try {
             message = (JSONObject) parser.parse(msg);
-        	String username = message.get("username").toString();
-        	JSONObject activity = (JSONObject) message.get("activity");
-        	activity.put("authenticated_user", username);
+            String username = message.get("username").toString();
+            JSONObject activity = (JSONObject) message.get("activity");
+            activity.put("authenticated_user", username);
             //If it is anonymous user, we can ignore the secret field
             String secret = "";
             if (!username.equals("anonymous")){
                 secret = message.get("secret").toString();
             }
             log.debug("check :"+username+"/"+secret);
-            if(username.equals("anonymous")) {
-                //Anonymous logins
-        		//Create a message and store them inside the queues
-        		Message newMsg = new Message(con, activity);
-        		Control.getInstance().addMessageToBufferQueue(newMsg);
-        		Control.getInstance().addToAllClientMsgBufferQueue(newMsg);
+            if(username.equals("anonymous")) {//Anonymous logins
+                //broadCast jsonString
+                String actBroad = Command.createActivityBroadcast(msg, activity);
+                ControlBroadcast.broadcastClients(actBroad);
+                Control.getInstance().broadcast(actBroad);
                 closeConnection = false;
                 return;
             }
             if(Login.checkUserLoggedIn(username)) {
-            	//Start checking users
-                if(Control.getInstance().checkLocalUserAndSecret(username,secret)) {  
-                    log.info("Checked successfully");
-            		//Create a message and store them inside the queues
-                    Message newMsg = new Message(con, activity);
-                    Control.getInstance().addMessageToBufferQueue(newMsg); 
-                    Control.getInstance().addToAllClientMsgBufferQueue(newMsg);
-                    System.out.println("here1");
+                //Start checking users
+                if(Control.getInstance().checkLocalUserAndSecret(username,secret)) {
+                    //broadCast jsonString
+                    String actBroad = Command.createActivityBroadcast(msg, activity);
+                    ControlBroadcast.broadcastClients(actBroad);
+                    Control.getInstance().broadcast(actBroad, con.getRemoteId());
                     closeConnection = false;
                     return;
-                }else { 
+                }else {
                     //If this username and secret are not correct, we send an authentication failed
-                    con.writeMsg(Command.createAuthenticateFailed(secret, ""));
+                    con.writeMsg(Command.createAuthenticateFailed(secret));
                     closeConnection = true;
                     return;
                 }
-            }else { 
+            }else {
                 //If this username and secret are not correct, we send an authentication failed
                 con.writeMsg(Command.createAuthFailedUserNotLoggedIn(username));
                 closeConnection = true;
                 return;
             }
-            
-            
+
+
         } catch (ParseException e) {
-        	Command.createInvalidMessage("JSON parse error while parsing message");
-        	closeConnection=true;
-        	return;
+            Command.createInvalidMessage("JSON parse error while parsing message");
+            closeConnection=true;
+            return;
         }
-}
-	
-	public boolean getResponse() {
-		return closeConnection;
-	}
+    }
+
+    public boolean getResponse() {
+        return closeConnection;
+    }
 
 }
