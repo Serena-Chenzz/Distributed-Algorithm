@@ -113,7 +113,7 @@ public class TextFrame extends JFrame implements ActionListener {
 		} else if(e.getSource()==disconnectButton){
 		    //When the user presses the disconnect button, it will send a LOGOUT message to the server and close the socket.
 		
-	        JSONObject logout = Command.createLogout();
+	        JSONObject logout = Command.createLogout(Settings.getUsername(), Settings.getSecret());
 	        ClientSkeleton.getInstance().writeMsg(logout.toJSONString());
 	        log.info("User is going to log out....");
 	        

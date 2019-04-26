@@ -55,7 +55,6 @@ public class ServerAnnounce extends Thread{
 					}
 					 
 					Control.getInstance().broadcast(serverAnnounce.toJSONString());
-					Control.getInstance().printRegisteredUsers();
 					Thread.sleep(Settings.getActivityInterval());
 				} catch (InterruptedException e) {
 					log.info("received an interrupt, system is shutting down");

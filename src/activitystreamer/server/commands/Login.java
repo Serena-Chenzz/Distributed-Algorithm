@@ -25,7 +25,7 @@ public class Login {
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB";
+            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
 
     public Login(Connection con, String msg) {
     	this.conn = con;
@@ -40,8 +40,8 @@ public class Login {
             String secret = message.get("secret").toString();
 
             //Checking the username and password
-            String sqlQuery = "SELECT * FROM User WHERE UserName = "+ username + " AND UserPassword =  " + secret +
-                    " AND LoggedInOrNot = 0;";
+            String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "' AND UserPassword =  '" + secret +
+                    "' AND LoggedInOrNot = 0;";
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
 
@@ -66,6 +66,7 @@ public class Login {
                 conn.writeMsg(loginFailed.toJSONString());
                 closeConnection = true;
             }
+            sqlConnection.close();
                 
         }
         catch (ParseException e) {

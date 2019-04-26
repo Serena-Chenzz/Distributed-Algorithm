@@ -26,7 +26,7 @@ public class Register {
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB";
+            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
     
     
     public Register(String msg, Connection con) {
@@ -42,9 +42,10 @@ public class Register {
             String secret =  message.get("secret").toString();
             
             //Check whether this user has been registered in the sqlite database
-            String sqlQuery = "SELECT * FROM User WHERE UserName = "+ username + ";";
+            String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
+
 
             if(result.next()) {
                 //If this user has been registered, we directly send a register_failed
@@ -71,8 +72,9 @@ public class Register {
                 //Adding user to list of users logged in
                 closeConnection = false;
             }
-                
-        }
+             sqlConnection.close();
+
+         }
         catch (ParseException e) {
             log.debug(e);
         }

@@ -20,7 +20,7 @@ public class PurchasingMessage {
     private final Logger log = LogManager.getLogger();
     private static java.sql.Connection sqlConnection;
     private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB";
+            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
 
 
     public PurchasingMessage(Connection con, String msg) {
@@ -38,23 +38,24 @@ public class PurchasingMessage {
 
             log.debug("check :"+username+"/"+secret);
 
-            String sqlQuery = "SELECT * FROM User WHERE UserName = "+ username + " AND UserPassword =  " + secret +
-                    " AND LoggedInOrNot = 1;";
+            String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "' AND UserPassword =  '" + secret +
+                    "' AND LoggedInOrNot = 1;";
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
 
             if(result.next()) {
                 // To be written: broadcast the msgs to the acceptors
                 closeConnection = false;
+                sqlConnection.close();
                 return;
 
             }else {
                 //If this username and secret are not correct, we send an authentication failed
                 con.writeMsg(Command.createAuthFailedUserNotLoggedIn(username));
                 closeConnection = true;
+                sqlConnection.close();
                 return;
             }
-
 
         } catch (ParseException e) {
             Command.createInvalidMessage("JSON parse error while parsing message");

@@ -15,7 +15,7 @@ public class Logout {
     private static boolean closeConnection=false;
     private static java.sql.Connection sqlConnection;
     private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB";
+            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
 
 
     public Logout(Connection con, String msg) {
@@ -33,6 +33,7 @@ public class Logout {
             pstmt.setString(2, secret);
             // update
             pstmt.executeUpdate();
+            sqlConnection.close();
         }
         catch (SQLException e){
             log.debug(e);
