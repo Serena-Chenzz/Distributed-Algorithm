@@ -5,6 +5,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import activitystreamer.server.Connection;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.sql.*;
 
@@ -23,8 +26,10 @@ public class Logout {
         closeConnection = true;
 
         try{
-            String username = Settings.getUsername();
-            String secret = Settings.getSecret();
+            JSONParser parser = new JSONParser();
+            JSONObject message = (JSONObject) parser.parse(msg);
+            String username = message.get("username").toString();
+            String secret = message.get("secret").toString();
 
             sqlConnection = DriverManager.getConnection(sqlUrl);
             String sqlUpdate = "UPDATE User SET LoggedInOrNot = 0 WHERE UserName = ? AND UserPassword = ?;";
@@ -36,6 +41,9 @@ public class Logout {
             sqlConnection.close();
         }
         catch (SQLException e){
+            log.debug(e);
+        }
+        catch (ParseException e) {
             log.debug(e);
         }
 
