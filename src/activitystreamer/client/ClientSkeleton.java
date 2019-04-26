@@ -63,7 +63,7 @@ public class ClientSkeleton extends Thread {
     }
 
     public JSONObject sendActivityObject(JSONObject activityObj) {
-        JSONObject jresponde = new JSONObject();
+        JSONObject jrespond = new JSONObject();
 
         try {
             String str = activityObj.toJSONString();
@@ -74,8 +74,8 @@ public class ClientSkeleton extends Thread {
             log.info("send activity to server" + Settings.getRemoteHostname()
                     + " " + Settings.getRemotePort() + " : " + str);
             String respond = inreader.readLine();
-            jresponde = (JSONObject) parser.parse(respond);
-            log.debug(jresponde.get("command"));
+            jrespond = (JSONObject) parser.parse(respond);
+            log.debug(jrespond.get("command"));
         } catch (EOFException e) {
             log.debug("EOF:" + e.getMessage());
         } catch (IOException e) {
@@ -94,7 +94,7 @@ public class ClientSkeleton extends Thread {
                 }
             }
         }
-        return jresponde;
+        return jrespond;
     }
 
     public void disconnect() {
@@ -247,18 +247,18 @@ public class ClientSkeleton extends Thread {
                                         redirect = true; 
                                     }                          
                                     break;
-                                case ACTIVITY_BROADCAST:
-                                    if(!Command.checkValidActivityBroadcast(resObj)){
-                                        String invalidAcMsg = Command.createInvalidMessage("Invalid ActivityBroadcast Message Format");
-                                        writeMsg(invalidAcMsg);
-                                        open=false;
-                                        break;
-                                    }
-                                    else{   
-                                    	JSONObject onlyActivity = (JSONObject) resObj.get("activity");
-                                	    textFrame.setOutputText(onlyActivity);
-                                	}
-                                	break;
+//                                case ACTIVITY_BROADCAST:
+//                                    if(!Command.checkValidActivityBroadcast(resObj)){
+//                                        String invalidAcMsg = Command.createInvalidMessage("Invalid ActivityBroadcast Message Format");
+//                                        writeMsg(invalidAcMsg);
+//                                        open=false;
+//                                        break;
+//                                    }
+//                                    else{
+//                                    	JSONObject onlyActivity = (JSONObject) resObj.get("activity");
+//                                	    textFrame.setOutputText(onlyActivity);
+//                                	}
+//                                	break;
                                 //If the command is not in the above command, the client will respond with an invalid message and close the connection
                                 default:
                                     String invalidMsg = Command.createInvalidMessage("the received message did not contain an applicable command");

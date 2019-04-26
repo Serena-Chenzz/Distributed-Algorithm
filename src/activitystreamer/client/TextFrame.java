@@ -103,11 +103,6 @@ public class TextFrame extends JFrame implements ActionListener {
 			JSONObject actObj;
 			try {
 				actObj = (JSONObject) parser.parse(msg);
-				//ActivityMessageReq actReq = new ActivityMessageReq(Command.ACTIVITY_MESSAGE, Settings.getUsername(), 
-				//Settings.getSecret(), actObj);
-				
-				//ActivityMessageReq actMsgReq  =  gson.fromJson(msg,ActivityMessageReq.class);
-				//String jsonResponse = gson.toJson(actReq);
 				clientCon.writeMsg(Command.createActivityMessage(Command.ACTIVITY_MESSAGE, Settings.getUsername(), 
 						Settings.getSecret(), actObj));
 				

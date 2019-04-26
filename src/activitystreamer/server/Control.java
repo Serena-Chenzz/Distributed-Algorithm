@@ -6,22 +6,13 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Random;
-
-import javax.jws.soap.SOAPBinding.Use;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import activitystreamer.server.commands.*;
 import activitystreamer.util.Settings;
@@ -529,12 +520,12 @@ public class Control extends Thread {
                             
                         case ACTIVITY_MESSAGE:
                             if (!Command.checkValidAcitivityMessage(userInput)){
-                                String invalidAc = Command.createInvalidMessage("Invalid ActivityMessage Message Format");
+                                String invalidAc = Command.createInvalidMessage("Invalid PurchasingMessage Message Format");
                                 con.writeMsg(invalidAc);
                                 return true;
                             }
                             else{
-                                ActivityMessage actMess = new ActivityMessage(con, msg);
+                                PurchasingMessage actMess = new PurchasingMessage(con, msg);
                                 return actMess.getResponse();
                             }
                             

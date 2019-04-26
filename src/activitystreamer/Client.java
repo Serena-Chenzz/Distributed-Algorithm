@@ -17,10 +17,10 @@ public class Client {
 	private static final Logger log = LogManager.getLogger();
 	
 	private static void help(Options options){
-		String header = "An ActivityStream Client for Unimelb COMP90015\n\n";
-		String footer = "\ncontact aharwood@unimelb.edu.au for issues.";
+		String header = "An Ticket Purchaser for Unimelb COMP90020\n\n";
+		String footer = "\ncontact dev groupfor issues.";
 		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp("ActivityStreamer.Client", header, options, footer, true);
+		formatter.printHelp("ClientEnd", header, options, footer, true);
 		System.exit(-1);
 	}
 	
@@ -70,9 +70,7 @@ public class Client {
 		
 		log.info("starting client");
 					
-		ClientSkeleton c = ClientSkeleton.getInstance(); 
-				
-			
+		ClientSkeleton c = ClientSkeleton.getInstance();
 		
 	}
 
