@@ -52,9 +52,6 @@ public class Prepare {
 		catch (ParseException e) {
 			log.debug(e);
 		}
-
-
-
 	}
 	
 	public void sendPromise(UniqueID proposalID, UniqueID acceptedID, String acceptedValue) {
