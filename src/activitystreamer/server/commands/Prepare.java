@@ -1,32 +1,63 @@
 package activitystreamer.server.commands;
-//Called when a Prepare message is received from a Proposer
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+
+
+import activitystreamer.models.*;
+import activitystreamer.server.Connection;
+import activitystreamer.server.Control;
+import activitystreamer.util.Settings;
+
 public class Prepare {
 
-	Integer proposalID, promisedID,acceptedID;
-	Object acceptedValue;
+	private static Connection conn;
+	private static final Logger log = LogManager.getLogger();
+	private static boolean closeConnection=false;
 	
 	public Prepare(String msg, Connection con) {
-		
-		this.proposalID = proposalID;
-		Acceptor acceptor = new Acceptor();
-		this.promisedID = acceptor.promisedID;
-		this.acceptedID = acceptor.acceptedID;
-		this.acceptedValue = acceptor.acceptedValue;
-		
-		if (promisedID != null && proposalID.equals(promisedID)) { // it is a duplicate message
-			sendPromise.sendPromise(proposalID, acceptedID, acceptedValue);
+
+		try{
+			UniqueID proposalID, promisedID,acceptedID;
+			String acceptedValue;
+
+			JSONParser parser = new JSONParser();
+			JSONObject message = (JSONObject) parser.parse(msg);
+
+			int lamportTimeStamp = Integer.parseInt(message.get("LamportTimeStamp").toString());
+			int serverID = Integer.parseInt(message.get("ServerID").toString());
+
+			proposalID = new UniqueID(lamportTimeStamp, serverID);
+			promisedID = Control.getInstance().getPromisedID();
+			acceptedID = Control.getInstance().getAccpetedID();
+			acceptedValue = Control.getInstance().getAccpetedValue();
+
+			if (promisedID != null && proposalID.equals(promisedID)) { // it is a duplicate message
+				sendPromise(proposalID, acceptedID, acceptedValue);
+			}
+			else if (promisedID == null || proposalID.largerThan(promisedID)) { // it is greater than promisedID, then change the promisedID
+				Control.getInstance().setPromisedID(proposalID);
+				sendPromise(proposalID, acceptedID, acceptedValue);
+			}
+			else {
+				sendNack(proposalID);
+			}
 		}
-		else if (promisedID == null || proposalID > promisedID) { // it is greater than promisedID, then change the promisedID
-			promisedID = proposalID;
-			sendPromise.sendPromise(proposalID, acceptedID, acceptedValue);
+		catch (ParseException e) {
+			log.debug(e);
 		}
-		else {
-			sendNack.sendNack(proposalID);
-		}
+
+
 
 	}
 	
-	public void sendPromise(Integer proposalID, Integer acceptedID, Object acceptedValue) {
+	public void sendPromise(UniqueID proposalID, UniqueID acceptedID, String acceptedValue) {
 			
 			Proposer proposer = new Proposer();	    
 			proposer.proposalID = proposalID;
@@ -34,11 +65,14 @@ public class Prepare {
 			proposer.acceptedValue = acceptedValue;
 		}
 	
-	public static void sendNack(Integer proposalID) {
+	public void sendNack(UniqueID proposalID) {
 		Proposer proposer = new Proposer();
 		proposer.proposalID = proposalID;
 		
 	}
 
+	public boolean getCloseCon() {
+		return closeConnection;
+	}
 
 }

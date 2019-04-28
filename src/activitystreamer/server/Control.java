@@ -35,9 +35,18 @@ public class Control extends Thread {
     private static Listener listener;
     private InetAddress ip;
     private static HashMap<Connection, String> activatorMonitor = new HashMap<Connection, String>();
+    private static UniqueID accpetedID;
+    private static UniqueID promisedID;
+    private static String accpetedValue;
 
     protected static Control control = null;
     protected static Load serverLoad;
+
+    public synchronized UniqueID getAccpetedID() {return accpetedID;}
+
+    public synchronized UniqueID getPromisedID() {return promisedID;}
+
+    public synchronized String getAccpetedValue() {return accpetedValue;}
     
     public synchronized static ArrayList<Connection> getNeighbors(){
         return neighbors;
@@ -404,6 +413,12 @@ public class Control extends Thread {
         return c;
 
     }
+
+    public synchronized void setAccpetedID(UniqueID ID) {accpetedID = ID;}
+
+    public synchronized void setPromisedID(UniqueID ID) {promisedID = ID;}
+
+    public synchronized void setAccpetedValue(String value) {accpetedValue = value;}
 
     public final void setTerm(boolean t) {
         term = t;
