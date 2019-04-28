@@ -30,8 +30,8 @@ public class Prepare {
 			JSONParser parser = new JSONParser();
 			JSONObject message = (JSONObject) parser.parse(msg);
 
-			int lamportTimeStamp = Integer.parseInt(message.get("LamportTimeStamp").toString());
-			int serverID = Integer.parseInt(message.get("ServerID").toString());
+			int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
+			int serverID = Integer.parseInt(message.get("serverID").toString());
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();

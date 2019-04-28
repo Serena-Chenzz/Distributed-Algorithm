@@ -34,9 +34,9 @@ public class Accept {
 			JSONParser parser = new JSONParser();
 			JSONObject message = (JSONObject) parser.parse(msg);
 
-			int lamportTimeStamp = Integer.parseInt(message.get("LamportTimeStamp").toString());
-			int serverID = Integer.parseInt(message.get("ServerID").toString());
-			String value = message.get("Value").toString();
+			int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
+			int serverID = Integer.parseInt(message.get("serverID").toString());
+			String value = message.get("value").toString();
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();
