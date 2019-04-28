@@ -345,16 +345,16 @@ public class Control extends Thread {
                                 return accept.getCloseCon();
                             }
 
-                        case ACCEPTED:
-                            if (!Command.checkValidAccepted(userInput)){
-                                String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
-                                con.writeMsg(invalidAccepted);
-                                return true;
-                            }
-                            else{
-                                Accepted accepted = new Accepted(msg, con);
-                                return accepted.getCloseCon();
-                            }
+//                        case ACCEPTED:
+//                            if (!Command.checkValidAccepted(userInput)){
+//                                String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
+//                                con.writeMsg(invalidAccepted);
+//                                return true;
+//                            }
+//                            else{
+//                                Accepted accepted = new Accepted(msg, con);
+//                                return accepted.getCloseCon();
+//                            }
 
                         case PREPARE:
                             if (!Command.checkValidPrepare(userInput)){
@@ -367,27 +367,27 @@ public class Control extends Thread {
                                 return prepare.getCloseCon();
                             }
 
-                        case PROMISE:
-                            if (!Command.checkValidPromise(userInput)){
-                                String invalidPromise = Command.createInvalidMessage("Invalid Accept Message Format");
-                                con.writeMsg(invalidPromise);
-                                return true;
-                            }
-                            else{
-                                Promise promise = new Promise(msg, con);
-                                return promise.getCloseCon();
-                            }
-
-                        case NACK:
-                            if (!Command.checkValidNack(userInput)){
-                                String invalidNack = Command.createInvalidMessage("Invalid Accept Message Format");
-                                con.writeMsg(invalidNack);
-                                return true;
-                            }
-                            else{
-                                Nack nack = new Nack(msg, con);
-                                return nack.getCloseCon();
-                            }
+//                        case PROMISE:
+//                            if (!Command.checkValidPromise(userInput)){
+//                                String invalidPromise = Command.createInvalidMessage("Invalid Accept Message Format");
+//                                con.writeMsg(invalidPromise);
+//                                return true;
+//                            }
+//                            else{
+//                                Promise promise = new Promise(msg, con);
+//                                return promise.getCloseCon();
+//                            }
+//
+//                        case NACK:
+//                            if (!Command.checkValidNack(userInput)){
+//                                String invalidNack = Command.createInvalidMessage("Invalid Accept Message Format");
+//                                con.writeMsg(invalidNack);
+//                                return true;
+//                            }
+//                            else{
+//                                Nack nack = new Nack(msg, con);
+//                                return nack.getCloseCon();
+//                            }
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format
