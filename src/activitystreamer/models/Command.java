@@ -13,7 +13,8 @@ import activitystreamer.server.Message;
 public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
-    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS
+    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE,
+    PROMISE, NACK
     ;
 
 
@@ -183,6 +184,50 @@ public enum Command {
         return obj.toJSONString();
 	}
 
+    public static String createAccept(int timeStamp, int serverID,String value){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ACCEPT.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        obj.put("value", value);
+        return obj.toJSONString();
+    }
+
+    public static String createAccepted(int timeStamp, int serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ACCEPT.toString());
+        obj.put("acceptedLamportTimeStamp", timeStamp);
+        obj.put("acceptedServerID", serverID);
+        return obj.toJSONString();
+    }
+
+    public static String createPrepare(int timeStamp, int serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PREPARE.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        return obj.toJSONString();
+    }
+
+    public static String promise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
+                                 int acceptedServerID, String value){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PROMISE.toString());
+        obj.put("proposalLamportTimeStamp", proposalLamportTimeStamp);
+        obj.put("proposalServerID", proposalServerID);
+        obj.put("acceptedLamportTimeStamp", acceptedLamportTimeStamp);
+        obj.put("acceptedServerID", acceptedServerID);
+        obj.put("acceptedValue", value);
+        return obj.toJSONString();
+    }
+
+    public static String createNack(int timeStamp, int serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", NACK.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        return obj.toJSONString();
+    }
     
     //The following methods are used to check if a command message is in a right format
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
@@ -228,6 +273,48 @@ public enum Command {
     //For server_announce
     public static boolean checkValidServerAnnounce(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("id")&& obj.containsKey("load")&& obj.containsKey("hostname")&& obj.containsKey("port")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Accept
+    public static boolean checkValidAccept(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")
+                && obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Accepted
+    public static boolean checkValidAccepted(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("acceptedLamportTimeStamp")&& obj.containsKey("acceptedServerID")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Prepare
+    public static boolean checkValidPrepare(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Promise
+    public static boolean checkValidPromise(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")&& obj.containsKey("acceptedLamportTimeStamp")
+                && obj.containsKey("acceptedServerID")&& obj.containsKey("acceptedValue")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Nack
+    public static boolean checkValidNack(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
         return false;

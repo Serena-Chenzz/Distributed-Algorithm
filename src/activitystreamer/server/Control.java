@@ -314,7 +314,6 @@ public class Control extends Thread {
                                 Logout logout = new Logout(con, msg);
                                 return logout.getResponse();
                             }
-                            
 //                        case ACTIVITY_MESSAGE:
 //                            if (!Command.checkValidAcitivityMessage(userInput)){
 //                                String invalidAc = Command.createInvalidMessage("Invalid PurchasingMessage Message Format");
@@ -325,7 +324,18 @@ public class Control extends Thread {
 //                                PurchasingMessage actMess = new PurchasingMessage(con, msg);
 //                                return actMess.getResponse();
 //                            }
-                            
+
+                        case ACCEPT:
+                            if (!Command.checkValidCommandFormat1(userInput)){
+                                String invalidReg = Command.createInvalidMessage("Invalid Register Message Format");
+                                con.writeMsg(invalidReg);
+                                return true;
+                            }
+                            else{
+                                Accept accept = new Accept(msg, con);
+                                return accept.getCloseCon();
+                            }
+
                         case INVALID_MESSAGE:
                             //First, check its informarion format
                             if (!Command.checkValidCommandFormat2(userInput)){

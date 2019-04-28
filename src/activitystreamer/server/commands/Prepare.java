@@ -14,14 +14,14 @@ public class Prepare {
 		this.acceptedValue = acceptor.acceptedValue;
 		
 		if (promisedID != null && proposalID.equals(promisedID)) { // it is a duplicate message
-			sendPromise.sendPromise(proposalID, acceptedID, acceptedValue);
+			sendPromise(proposalID, acceptedID, acceptedValue);
 		}
 		else if (promisedID == null || proposalID > promisedID) { // it is greater than promisedID, then change the promisedID
 			promisedID = proposalID;
-			sendPromise.sendPromise(proposalID, acceptedID, acceptedValue);
+			sendPromise(proposalID, acceptedID, acceptedValue);
 		}
 		else {
-			sendNack.sendNack(proposalID);
+			sendNack(proposalID);
 		}
 
 	}
