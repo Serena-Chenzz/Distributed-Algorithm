@@ -18,6 +18,9 @@ import activitystreamer.server.commands.*;
 import activitystreamer.util.Settings;
 import activitystreamer.models.*;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class Control extends Thread {
 
     protected static final Logger log = LogManager.getLogger();
@@ -38,6 +41,7 @@ public class Control extends Thread {
     private static UniqueID accpetedID;
     private static UniqueID promisedID;
     private static String accpetedValue;
+    private static int acceptedNum = 0; // need to be initiate whenver start new proposal
 
     protected static Control control = null;
     protected static Load serverLoad;
@@ -345,16 +349,34 @@ public class Control extends Thread {
                                 return accept.getCloseCon();
                             }
 
-//                        case ACCEPTED:
-//                            if (!Command.checkValidAccepted(userInput)){
-//                                String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
-//                                con.writeMsg(invalidAccepted);
-//                                return true;
-//                            }
-//                            else{
-//                                Accepted accepted = new Accepted(msg, con);
-//                                return accepted.getCloseCon();
-//                            }
+                        case ACCEPTED:
+                           if (!Command.checkValidAccepted(userInput)){
+                                String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
+                                con.writeMsg(invalidAccepted);
+                                return true;
+                            }
+                            else{
+                                acceptedNum++;
+                                if (acceptedNum * 2 > connectionServers.size()){
+                                    JSONObject obj = new JSONObject();
+                                    obj.put("command", Command.DECIDE.toString());
+                                    obj.put("decidedID", accpetedID);
+                                    obj.put("decidedValue", accpetedValue);                                
+                                    new Decide(obj.toJSONString());
+                                    acceptedNum = 0;
+                                }
+                                return true;
+                            }
+                           
+                        case DECIDE:
+                            //check
+                            Gson g = new Gson(); 
+                            UniqueID dID = g.fromJson(userInput.get("decidedID").toString(), UniqueID.class);
+                            if (dID.largerThan(accpetedID)){
+                                accpetedID = dID;
+                                accpetedValue = userInput.get("decidedValue").toString();
+                            }
+                            return true;
 
                         case PREPARE:
                             if (!Command.checkValidPrepare(userInput)){
