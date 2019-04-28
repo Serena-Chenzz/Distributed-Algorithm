@@ -209,7 +209,7 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String promise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
+    public static String createPromise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
                                  int acceptedServerID, String value){
         JSONObject obj = new JSONObject();
         obj.put("command", PROMISE.toString());

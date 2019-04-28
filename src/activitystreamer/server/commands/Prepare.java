@@ -55,17 +55,17 @@ public class Prepare {
 	}
 	
 	public void sendPromise(UniqueID proposalID, UniqueID acceptedID, String acceptedValue) {
-			
-			Proposer proposer = new Proposer();	    
-			proposer.proposalID = proposalID;
-			proposer.acceptedID = acceptedID;
-			proposer.acceptedValue = acceptedValue;
-		}
+
+		String promiseMsg = Command.createPromise(proposalID.getLamportTimeStamp(), proposalID.getServerID(),
+				acceptedID.getLamportTimeStamp(), acceptedID.getServerID(),acceptedValue);
+		conn.writeMsg(promiseMsg);
+		log.debug(promiseMsg);
+	}
 	
 	public void sendNack(UniqueID proposalID) {
-		Proposer proposer = new Proposer();
-		proposer.proposalID = proposalID;
-		
+		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
+		conn.writeMsg(nackMsg);
+		log.debug(nackMsg);
 	}
 
 	public boolean getCloseCon() {

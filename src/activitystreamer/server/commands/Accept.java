@@ -49,7 +49,7 @@ public class Accept {
 				Control.getInstance().setAccpetedID(proposalID);
 				Control.getInstance().setAccpetedValue(value);
 
-				sendAccepted(proposalID, acceptedID, acceptedValue);
+				sendAccepted(acceptedID);
 			}
 			else {
 				sendNack(proposalID);
@@ -60,14 +60,18 @@ public class Accept {
 
 	}
 	
-	public void sendAccepted(UniqueID proposalID, UniqueID acceptedID, String acceptedValue) {
+	public void sendAccepted(UniqueID acceptedID) {
 		// Create the command and send back
-		proposer.acceptedID = proposalID;
+		String acceptedMsg = Command.createAccepted(acceptedID.getLamportTimeStamp(), acceptedID.getServerID());
+		conn.writeMsg(acceptedMsg);
+		log.debug(acceptedMsg);
 	}
 	
 	public void sendNack(UniqueID proposalID) {
 		// Create the command and send back
-		proposer.proposalID = proposalID;
+		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
+		conn.writeMsg(nackMsg);
+		log.debug(nackMsg);
 
 	}
 
