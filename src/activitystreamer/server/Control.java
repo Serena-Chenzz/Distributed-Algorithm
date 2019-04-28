@@ -388,6 +388,18 @@ public class Control extends Thread {
 //                                Nack nack = new Nack(msg, con);
 //                                return nack.getCloseCon();
 //                            }
+//
+//                        case PROPOSE:
+//                            if (!Command.checkValidPropose(userInput)){
+//                                String invalidPropose = Command.createInvalidMessage("Invalid Propose Message Format");
+//                                con.writeMsg(invalidPropose);
+//                                return true;
+//                            }
+//                            else{
+//                                Propose propose = new Propose(msg, con);
+//                                return propose.getCloseCon();
+//                            }
+
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format

@@ -13,7 +13,7 @@ import activitystreamer.server.Message;
 public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
-    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE,
+    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
     PROMISE, NACK
     ;
 
@@ -209,6 +209,14 @@ public enum Command {
         return obj.toJSONString();
     }
 
+    public static String createPropose(int timeStamp, int serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PROPOSE.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        return obj.toJSONString();
+    }
+
     public static String createPromise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
                                  int acceptedServerID, String value){
         JSONObject obj = new JSONObject();
@@ -314,6 +322,14 @@ public enum Command {
 
     //For Nack
     public static boolean checkValidNack(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Propose
+    public static boolean checkValidPropose(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
