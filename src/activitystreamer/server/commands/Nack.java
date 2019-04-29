@@ -50,6 +50,8 @@ public class Nack {
         Control.getInstance().clearPromiseSet();
         log.debug(nackMsg);
     }
+
+
     public boolean getCloseCon() {
         return closeConnection;
     }

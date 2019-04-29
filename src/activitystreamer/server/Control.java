@@ -442,6 +442,16 @@ public class Control extends Thread {
                                 return propose.getCloseCon();
                             }
 
+//                        case DECIDE:
+//                            if (!Command.checkValidDecide(userInput)){
+//                                String invalidDecide = Command.createInvalidMessage("Invalid Decide Message Format");
+//                                con.writeMsg(invalidDecide);
+//                                return true;
+//                            }
+//                            else{
+//                                Decide decide = new Decide(msg, con);
+//                                return decide.getCloseCon();
+//                            }
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format

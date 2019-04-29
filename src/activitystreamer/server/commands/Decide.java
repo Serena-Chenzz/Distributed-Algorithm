@@ -25,12 +25,14 @@ import org.json.simple.JSONObject;
  * @author wknje
  */
 public class Decide extends Thread{
+    private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private String msg;
     
-    public Decide(String decideMsg) {
+    public Decide(String decideMsg, Connection con) {
         msg = decideMsg;
+        Decide.conn = con;
         start();
     }
 

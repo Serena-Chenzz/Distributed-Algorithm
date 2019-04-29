@@ -14,7 +14,7 @@ public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
     ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
-    PROMISE, NACK,DECIDE,ABORT
+    PROMISE, NACK, DECIDE, ABORT
     ;
 
 
@@ -195,7 +195,7 @@ public enum Command {
 
     public static String createAccepted(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
-        obj.put("command", ACCEPT.toString());
+        obj.put("command", ACCEPTED.toString());
         obj.put("acceptedLamportTimeStamp", timeStamp);
         obj.put("acceptedServerID", serverID);
         return obj.toJSONString();
@@ -246,13 +246,13 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createAbort(int timeStamp, String serverID){
-        JSONObject obj = new JSONObject();
-        obj.put("command", ABORT.toString());
-        obj.put("lamportTimeStamp", timeStamp);
-        obj.put("serverID", serverID);
-        return obj.toJSONString();
-    }
+//    public static String createAbort(int timeStamp, String serverID){
+//        JSONObject obj = new JSONObject();
+//        obj.put("command", ABORT.toString());
+//        obj.put("lamportTimeStamp", timeStamp);
+//        obj.put("serverID", serverID);
+//        return obj.toJSONString();
+//    }
     
     //The following methods are used to check if a command message is in a right format
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
@@ -352,4 +352,14 @@ public enum Command {
         }
         return false;
     }
+
+    //For Decide new added
+    public static boolean checkValidDecide(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
+
 }
