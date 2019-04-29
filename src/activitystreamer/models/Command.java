@@ -1,6 +1,9 @@
 package activitystreamer.models;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.json.simple.JSONObject;
 
@@ -14,7 +17,7 @@ public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
     ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
-    PROMISE, NACK
+    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS
     ;
 
 
@@ -26,7 +29,6 @@ public enum Command {
         }
         return false;
     }
-    
 
     
     //Create LOGIN JSON object.
@@ -236,6 +238,52 @@ public enum Command {
         obj.put("serverID", serverID);
         return obj.toJSONString();
     }
+
+    public static String createBuyTicket(int trainNum, int userId, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", BUY_TICKET.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("userId", userId);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefundTicket(int trainNum, int userId, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFUND_TICKET.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("userId", userId);
+        obj.put("refundTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createPurchaseSuccess(int trainNum, int userId, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PURCHASE_SUCCESS.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("userId", userId);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createPurchaseFail(int trainNum, int userId, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PURCHASE_FAIL.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("userId", userId);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefundSuccess(int trainNum, int userId, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFUND_SUCCESS.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("userId", userId);
+        obj.put("refundTime", time);
+        return obj.toJSONString();
+    }
+
     
     //The following methods are used to check if a command message is in a right format
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
@@ -331,6 +379,22 @@ public enum Command {
     //For Propose
     public static boolean checkValidPropose(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
+            return true;
+        }
+        return false;
+    }
+
+    // Check BUY_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL
+    public static boolean checkBuying(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("userId")&& obj.containsKey("purchaseTime")){
+            return true;
+        }
+        return false;
+    }
+
+    // Check REFUND_TICKET, REFUND_SUCCESS
+    public static boolean checkRefundTicket(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("userId")&& obj.containsKey("refundTime")){
             return true;
         }
         return false;

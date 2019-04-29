@@ -35,9 +35,18 @@ public class Control extends Thread {
     private static Listener listener;
     private InetAddress ip;
     private static HashMap<Connection, String> activatorMonitor = new HashMap<Connection, String>();
-    private static UniqueID accpetedID;
-    private static UniqueID promisedID;
-    private static String accpetedValue;
+    private static UniqueID accpetedID = null;
+    private static UniqueID promisedID = null;
+    private static String accpetedValue = "";
+    /* Every time there is an event, add on the lamport time.
+    * */
+    private static int lamportTime = 0;
+
+    // To record the connection to leader
+    private static Connection leader;
+
+    // To record the connection to dbserver
+    private static Connection dbServer;
 
     protected static Control control = null;
     protected static Load serverLoad;
@@ -400,6 +409,49 @@ public class Control extends Thread {
 //                                return propose.getCloseCon();
 //                            }
 
+                        case BUY_TICKET:
+                            if (!Command.checkBuying(userInput)){
+                                String invalidBuying = Command.createInvalidMessage("Invalid BuyingTicket Message Format");
+                                con.writeMsg(invalidBuying);
+                                return true;
+                            }
+                            else if (leader == null){
+                                 //Send the msg to the dbserver sequentially
+                                sendMsgToDBServer(msg);
+                                return false;
+                            }
+                            else if (dbServer == null){
+                                //db server processes the msg
+                                BuyTicket buyTicket = new BuyTicket(msg, con);
+                                return buyTicket.getCloseCon();
+                            }
+                            else{
+                                //Other server sends the msg to the leader
+                                leader.writeMsg(msg);
+                                return false;
+                            }
+
+                        case REFUND_TICKET:
+                            if (!Command.checkRefundTicket(userInput)){
+                                String invalidRefund = Command.createInvalidMessage("Invalid RefundingTicket Message Format");
+                                con.writeMsg(invalidRefund);
+                                return true;
+                            }
+                            else if (leader == null){
+                                //Send the msg to the dbserver sequentially
+                                sendMsgToDBServer(msg);
+                                return false;
+                            }
+                            else if (dbServer == null){
+                                //db server processes the msg
+                                RefundTicket refundTicket = new RefundTicket(msg, con);
+                                return refundTicket.getCloseCon();
+                            }
+                            else{
+                                //Other server sends the msg to the leader
+                                leader.writeMsg(msg);
+                                return false;
+                            }
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format
@@ -478,6 +530,11 @@ public class Control extends Thread {
         connections.put(c,true);
         return c;
 
+    }
+
+    // This is used to send messages to the db server sequentially
+    public synchronized void sendMsgToDBServer(String msg){
+        dbServer.writeMsg(msg);
     }
 
     public synchronized void setAccpetedID(UniqueID ID) {accpetedID = ID;}
