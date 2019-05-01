@@ -62,16 +62,17 @@ public class ClientSkeleton extends Thread {
         start();
     }
 
-    public void disconnect() {
+    public synchronized void disconnect() {
         open = false;
         interrupt();
         System.exit(0);
     }
 
     //For textframe to write messages
-    public void writeMsg(String s) {
+    public synchronized void writeMsg(String s) {
     	outwriter.println(s);
         outwriter.flush();
+        log.info(s);
     }
 
     public void run() {

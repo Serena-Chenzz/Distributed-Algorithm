@@ -35,7 +35,8 @@ public class BuyTicket {
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
             String username = message.get("username").toString();
-            int trainId = (int) message.get("trainNum");
+            long trainLongId = (long)message.get("trainNum");
+            int trainId = (int) trainLongId;
             String purchaseTime = message.get("purchaseTime").toString();
 
             int userId = 0;

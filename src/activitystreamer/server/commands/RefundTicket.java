@@ -32,7 +32,8 @@ public class RefundTicket {
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
             String username = message.get("username").toString();
-            int trainId = (int) message.get("trainNum");
+            long trainLongId = (long) message.get("trainNum");
+            int trainId = (int) trainLongId;
             String refundTime = message.get("refundTime").toString();
 
             int userId = 0;
