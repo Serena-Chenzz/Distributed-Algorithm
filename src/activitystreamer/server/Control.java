@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,9 +15,6 @@ import org.json.simple.parser.ParseException;
 import activitystreamer.server.commands.*;
 import activitystreamer.util.Settings;
 import activitystreamer.models.*;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 public class Control extends Thread {
 
@@ -38,15 +33,25 @@ public class Control extends Thread {
     private static Listener listener;
     private InetAddress ip;
     private static HashMap<Connection, String> activatorMonitor = new HashMap<Connection, String>();
-    private static UniqueID accpetedID = null;
-    private static UniqueID promisedID = null;
-    private static String accpetedValue = "";
-    /* Every time there is an event, add on the lamport time.
-    * */
-    private static int lamportTime = 0;
+    private static UniqueID accpetedID;
+    private static UniqueID promisedID;
+    private static String accpetedValue;
+    private static String serverID = UUID.randomUUID().toString();
 
-    // To record the connection to leader
+    // added in the evening of 04-28
+    private static UniqueID proposalID = new UniqueID(0,serverID);
+    private static HashMap<UniqueID, String> promiseSet = new HashMap<>();
+    private static int ackNumber = 0;
+    private static String proposedValue;
+
     private static Connection leader;
+
+    public synchronized String getproposedValue(){ return proposedValue; }
+    public synchronized void setProposedValue(String value){ proposedValue = value;}
+
+    public synchronized int getAckNumber(){ return ackNumber; }
+
+    public synchronized void addAckNumber() {ackNumber += 1;}
 
     private static int acceptedNum = 0; // need to be initiate whenver start new proposal
 
@@ -58,10 +63,35 @@ public class Control extends Thread {
     public synchronized UniqueID getPromisedID() {return promisedID;}
 
     public synchronized String getAccpetedValue() {return accpetedValue;}
+
+
+
+    public synchronized UniqueID getProposalID() {return proposalID;}
     
     public synchronized static ArrayList<Connection> getNeighbors(){
         return neighbors;
     }
+
+    public synchronized static HashMap<UniqueID,String> getPromiseSet(){
+        return promiseSet;
+    }
+
+    public synchronized void addToPromiseSet(UniqueID promiseID,String promiseValue){
+        promiseSet.put(promiseID,promiseValue);
+    }
+
+    public synchronized void clearPromiseSet(){ promiseSet.clear();
+    }
+
+
+    public synchronized void clearAckNumber(){ ackNumber = 0; }
+
+    public void addLamportTimeStamp(){ proposalID.addLamportTimeStamp();}
+
+
+
+
+
     
     public synchronized static String getRemoteId(){
         return uniqueId;
@@ -109,6 +139,7 @@ public class Control extends Thread {
             log.fatal("failed to startup a listening thread: " + e1);
             System.exit(-1);
         }
+
         start();
     }
 
@@ -158,6 +189,7 @@ public class Control extends Thread {
     public synchronized boolean process(Connection con, String msg) {
         System.out.println("\n**Receiving: " + msg);
         try {
+
             JSONParser parser = new JSONParser();
             JSONObject userInput = (JSONObject) parser.parse(msg);
             
@@ -175,6 +207,7 @@ public class Control extends Thread {
                     return true;
                 }
                 else{
+                    addLamportTimeStamp();
                     Command userCommand = Command.valueOf(targetCommand);
                     switch (userCommand) {
                         //In any case, if it returns true, it closes the connection.
@@ -334,16 +367,6 @@ public class Control extends Thread {
                                 Logout logout = new Logout(con, msg);
                                 return logout.getResponse();
                             }
-//                        case ACTIVITY_MESSAGE:
-//                            if (!Command.checkValidAcitivityMessage(userInput)){
-//                                String invalidAc = Command.createInvalidMessage("Invalid PurchasingMessage Message Format");
-//                                con.writeMsg(invalidAc);
-//                                return true;
-//                            }
-//                            else{
-//                                PurchasingMessage actMess = new PurchasingMessage(con, msg);
-//                                return actMess.getResponse();
-//                            }
 
                         case ACCEPT:
                             if (!Command.checkValidAccept(userInput)){
@@ -357,33 +380,15 @@ public class Control extends Thread {
                             }
 
                         case ACCEPTED:
-                           if (!Command.checkValidAccepted(userInput)){
+                            if (!Command.checkValidAccepted(userInput)){
                                 String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
                                 con.writeMsg(invalidAccepted);
                                 return true;
                             }
                             else{
-                                acceptedNum++;
-                                if (acceptedNum * 2 > connectionServers.size()){
-                                    JSONObject obj = new JSONObject();
-                                    obj.put("command", Command.DECIDE.toString());
-                                    obj.put("decidedID", accpetedID);
-                                    obj.put("decidedValue", accpetedValue);                                
-                                    new Decide(obj.toJSONString());
-                                    acceptedNum = 0;
-                                }
-                                return true;
+                                Accepted accepted = new Accepted(msg, con);
+                                return accepted.getCloseCon();
                             }
-                           
-                        case DECIDE:
-                            //check
-                            Gson g = new Gson(); 
-                            UniqueID dID = g.fromJson(userInput.get("decidedID").toString(), UniqueID.class);
-                            if (dID.largerThan(accpetedID)){
-                                accpetedID = dID;
-                                accpetedValue = userInput.get("decidedValue").toString();
-                            }
-                            return true;
 
                         case PREPARE:
                             if (!Command.checkValidPrepare(userInput)){
@@ -395,39 +400,6 @@ public class Control extends Thread {
                                 Prepare prepare = new Prepare(msg, con);
                                 return prepare.getCloseCon();
                             }
-
-//                        case PROMISE:
-//                            if (!Command.checkValidPromise(userInput)){
-//                                String invalidPromise = Command.createInvalidMessage("Invalid Accept Message Format");
-//                                con.writeMsg(invalidPromise);
-//                                return true;
-//                            }
-//                            else{
-//                                Promise promise = new Promise(msg, con);
-//                                return promise.getCloseCon();
-//                            }
-//
-//                        case NACK:
-//                            if (!Command.checkValidNack(userInput)){
-//                                String invalidNack = Command.createInvalidMessage("Invalid Accept Message Format");
-//                                con.writeMsg(invalidNack);
-//                                return true;
-//                            }
-//                            else{
-//                                Nack nack = new Nack(msg, con);
-//                                return nack.getCloseCon();
-//                            }
-//
-//                        case PROPOSE:
-//                            if (!Command.checkValidPropose(userInput)){
-//                                String invalidPropose = Command.createInvalidMessage("Invalid Propose Message Format");
-//                                con.writeMsg(invalidPropose);
-//                                return true;
-//                            }
-//                            else{
-//                                Propose propose = new Propose(msg, con);
-//                                return propose.getCloseCon();
-//                            }
 
                         case REFRESH_REQUEST:
                             if (!Command.checkValidRefreshReq(userInput)){
@@ -450,27 +422,60 @@ public class Control extends Thread {
                                 BuyTicket buyTicket = new BuyTicket(msg, con);
                                 return buyTicket.getCloseCon();
                             }
-                            else{
-                                //Other server sends the msg to the leader
-                                leader.writeMsg(msg);
-                                return false;
-                            }
-
                         case REFUND_TICKET:
                             if (!Command.checkRefundTicket(userInput)){
-                                String invalidRefund = Command.createInvalidMessage("Invalid RefundingTicket Message Format");
-                                con.writeMsg(invalidRefund);
+                                String invalidRefunding = Command.createInvalidMessage("Invalid RefundingTicket Message Format");
+                                con.writeMsg(invalidRefunding);
                                 return true;
                             }
                             else if (leader == null){
                                 RefundTicket refundTicket = new RefundTicket(msg, con);
                                 return refundTicket.getCloseCon();
                             }
-                            else{
-                                //Other server sends the msg to the leader
-                                leader.writeMsg(msg);
-                                return false;
+                        case PROMISE:
+                            if (!Command.checkValidPromise(userInput)){
+                                String invalidPromise = Command.createInvalidMessage("Invalid Accept Message Format");
+                                con.writeMsg(invalidPromise);
+                                return true;
                             }
+                            else{
+                                Promise promise = new Promise(msg, con);
+                                return promise.getCloseCon();
+                            }
+
+                        case NACK:
+                            if (!Command.checkValidNack(userInput)){
+                                String invalidNack = Command.createInvalidMessage("Invalid Accept Message Format");
+                                con.writeMsg(invalidNack);
+                                return true;
+                            }
+
+                            else{
+                                Nack nack = new Nack(msg, con);
+                                return nack.getCloseCon();
+                            }
+
+                        case PROPOSE:
+                            if (!Command.checkValidPropose(userInput)){
+                                String invalidPropose = Command.createInvalidMessage("Invalid Propose Message Format");
+                                con.writeMsg(invalidPropose);
+                                return true;
+                            }
+                            else{
+                                Propose propose = new Propose(msg, con);
+                                return propose.getCloseCon();
+                            }
+
+//                        case DECIDE:
+//                            if (!Command.checkValidDecide(userInput)){
+//                                String invalidDecide = Command.createInvalidMessage("Invalid Decide Message Format");
+//                                con.writeMsg(invalidDecide);
+//                                return true;
+//                            }
+//                            else{
+//                                Decide decide = new Decide(msg, con);
+//                                return decide.getCloseCon();
+//                            }
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format
@@ -549,6 +554,27 @@ public class Control extends Thread {
         connections.put(c,true);
         return c;
 
+    }
+
+    public synchronized String getAcceptedValueWithLargestProposalID(UniqueID uniqueID)
+    {
+        String value = promiseSet.get(uniqueID);
+        UniqueID largestID = uniqueID;
+        for (UniqueID key : promiseSet.keySet()){
+            if (value == null)
+            {
+                if (promiseSet.get(key) != null)
+                {
+                    largestID = key;
+                    value = promiseSet.get(key);
+                }
+            }
+            else if (key.largerThan(largestID) && promiseSet.get(key) != null){
+                largestID = key;
+                value = promiseSet.get(largestID);
+            }
+        }
+        return value;
     }
 
     public synchronized void setAccpetedID(UniqueID ID) {accpetedID = ID;}

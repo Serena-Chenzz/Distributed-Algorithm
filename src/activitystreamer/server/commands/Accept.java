@@ -35,7 +35,7 @@ public class Accept {
 			JSONObject message = (JSONObject) parser.parse(msg);
 
 			int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
-			int serverID = Integer.parseInt(message.get("serverID").toString());
+			String serverID = message.get("serverID").toString();
 			String value = message.get("value").toString();
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
@@ -66,7 +66,7 @@ public class Accept {
 		conn.writeMsg(acceptedMsg);
 		log.debug(acceptedMsg);
 	}
-	
+
 	public void sendNack(UniqueID proposalID) {
 		// Create the command and send back
 		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());

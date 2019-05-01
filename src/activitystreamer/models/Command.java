@@ -1,9 +1,6 @@
 package activitystreamer.models;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -18,8 +15,9 @@ public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
     ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
+
     PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS, DECIDE, REFRESH_REQUEST,
-    REFRESH_INFO
+    REFRESH_INFO,ABORT
     ;
 
 
@@ -31,6 +29,7 @@ public enum Command {
         }
         return false;
     }
+    
 
     
     //Create LOGIN JSON object.
@@ -188,7 +187,7 @@ public enum Command {
         return obj.toJSONString();
 	}
 
-    public static String createAccept(int timeStamp, int serverID,String value){
+    public static String createAccept(int timeStamp, String serverID,String value){
         JSONObject obj = new JSONObject();
         obj.put("command", ACCEPT.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -197,15 +196,15 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createAccepted(int timeStamp, int serverID){
+    public static String createAccepted(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
-        obj.put("command", ACCEPT.toString());
+        obj.put("command", ACCEPTED.toString());
         obj.put("acceptedLamportTimeStamp", timeStamp);
         obj.put("acceptedServerID", serverID);
         return obj.toJSONString();
     }
 
-    public static String createPrepare(int timeStamp, int serverID){
+    public static String createPrepare(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", PREPARE.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -213,16 +212,17 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createPropose(int timeStamp, int serverID){
+    public static String createPropose(int timeStamp, String serverID, String value){
         JSONObject obj = new JSONObject();
         obj.put("command", PROPOSE.toString());
         obj.put("lamportTimeStamp", timeStamp);
         obj.put("serverID", serverID);
+        obj.put("value",value);
         return obj.toJSONString();
     }
 
-    public static String createPromise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
-                                 int acceptedServerID, String value){
+    public static String createPromise(int proposalLamportTimeStamp, String proposalServerID, int acceptedLamportTimeStamp,
+                                 String acceptedServerID, String value){
         JSONObject obj = new JSONObject();
         obj.put("command", PROMISE.toString());
         obj.put("proposalLamportTimeStamp", proposalLamportTimeStamp);
@@ -233,7 +233,7 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createNack(int timeStamp, int serverID){
+    public static String createNack(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", NACK.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -303,6 +303,23 @@ public enum Command {
     }
 
     
+
+    // added in the evening of 04-28
+    public static String createDecide(String value){
+        JSONObject obj = new JSONObject();
+        obj.put("command", DECIDE.toString());
+        obj.put("value", value);
+        return obj.toJSONString();
+    }
+
+    public static String createAbort(int timeStamp, String serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ABORT.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        return obj.toJSONString();
+    }
+
     
     //The following methods are used to check if a command message is in a right format
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
@@ -403,6 +420,7 @@ public enum Command {
         return false;
     }
 
+
     // Check BUY_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL
     public static boolean checkBuying(JSONObject obj){
         if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("username")&& obj.containsKey("purchaseTime")){
@@ -410,6 +428,15 @@ public enum Command {
         }
         return false;
     }
+
+    //For Decide new added
+    public static boolean checkValidDecide(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
 
     // Check REFUND_TICKET, REFUND_SUCCESS
     public static boolean checkRefundTicket(JSONObject obj){
@@ -432,4 +459,5 @@ public enum Command {
         }
         return false;
     }
+
 }
