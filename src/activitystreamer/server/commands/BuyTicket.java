@@ -23,8 +23,7 @@ public class BuyTicket {
     private static java.sql.Connection sqlConnection;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
-    private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
+    private static final String sqlUrl = Settings.getSqlUrl();
 
     public BuyTicket(String msg, Connection con){
         conn = con;

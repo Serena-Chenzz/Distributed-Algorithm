@@ -5,6 +5,7 @@ import activitystreamer.server.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
+import activitystreamer.util.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -24,8 +25,7 @@ public class Login {
 	private String msg;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
-    private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
+    private static final String sqlUrl = Settings.getSqlUrl();
 
     public Login(Connection con, String msg) {
     	this.conn = con;
