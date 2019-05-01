@@ -48,9 +48,6 @@ public class Control extends Thread {
     // To record the connection to leader
     private static Connection leader;
 
-    // To record the connection to dbserver
-    private static Connection dbServer;
-
     private static int acceptedNum = 0; // need to be initiate whenver start new proposal
 
     protected static Control control = null;
@@ -432,6 +429,17 @@ public class Control extends Thread {
 //                                return propose.getCloseCon();
 //                            }
 
+                        case REFRESH_REQUEST:
+                            if (!Command.checkValidRefreshReq(userInput)){
+                                String invalidRefreshReq = Command.createInvalidMessage("Invalid RefreshRequest Message Format");
+                                con.writeMsg(invalidRefreshReq);
+                                return true;
+                            }
+                            else{
+                                RefreshRequest rq = new RefreshRequest(msg,con);
+                                return rq.getCloseCon();
+                            }
+
                         case BUY_TICKET:
                             if (!Command.checkBuying(userInput)){
                                 String invalidBuying = Command.createInvalidMessage("Invalid BuyingTicket Message Format");
@@ -439,12 +447,6 @@ public class Control extends Thread {
                                 return true;
                             }
                             else if (leader == null){
-                                 //Send the msg to the dbserver sequentially
-                                sendMsgToDBServer(msg);
-                                return false;
-                            }
-                            else if (dbServer == null){
-                                //db server processes the msg
                                 BuyTicket buyTicket = new BuyTicket(msg, con);
                                 return buyTicket.getCloseCon();
                             }
@@ -461,12 +463,6 @@ public class Control extends Thread {
                                 return true;
                             }
                             else if (leader == null){
-                                //Send the msg to the dbserver sequentially
-                                sendMsgToDBServer(msg);
-                                return false;
-                            }
-                            else if (dbServer == null){
-                                //db server processes the msg
                                 RefundTicket refundTicket = new RefundTicket(msg, con);
                                 return refundTicket.getCloseCon();
                             }
@@ -553,11 +549,6 @@ public class Control extends Thread {
         connections.put(c,true);
         return c;
 
-    }
-
-    // This is used to send messages to the db server sequentially
-    public synchronized void sendMsgToDBServer(String msg){
-        dbServer.writeMsg(msg);
     }
 
     public synchronized void setAccpetedID(UniqueID ID) {accpetedID = ID;}

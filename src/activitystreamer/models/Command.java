@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.google.gson.Gson;
@@ -17,8 +18,8 @@ public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
     ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
-
-    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS, DECIDE
+    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS, DECIDE, REFRESH_REQUEST,
+    REFRESH_INFO
     ;
 
 
@@ -240,48 +241,64 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createBuyTicket(int trainNum, int userId, String time){
+    public static String createBuyTicket(int trainNum, String username, String time){
         JSONObject obj = new JSONObject();
         obj.put("command", BUY_TICKET.toString());
         obj.put("trainNum", trainNum);
-        obj.put("userId", userId);
+        obj.put("username", username);
         obj.put("purchaseTime", time);
         return obj.toJSONString();
     }
 
-    public static String createRefundTicket(int trainNum, int userId, String time){
+    public static String createRefundTicket(int trainNum, String username, String time){
         JSONObject obj = new JSONObject();
         obj.put("command", REFUND_TICKET.toString());
         obj.put("trainNum", trainNum);
-        obj.put("userId", userId);
+        obj.put("username", username);
         obj.put("refundTime", time);
         return obj.toJSONString();
     }
 
-    public static String createPurchaseSuccess(int trainNum, int userId, String time){
+    public static String createPurchaseSuccess(int trainNum, String username, String time){
         JSONObject obj = new JSONObject();
         obj.put("command", PURCHASE_SUCCESS.toString());
         obj.put("trainNum", trainNum);
-        obj.put("userId", userId);
+        obj.put("username", username);
         obj.put("purchaseTime", time);
         return obj.toJSONString();
     }
 
-    public static String createPurchaseFail(int trainNum, int userId, String time){
+    public static String createPurchaseFail(int trainNum, String username, String time){
         JSONObject obj = new JSONObject();
         obj.put("command", PURCHASE_FAIL.toString());
         obj.put("trainNum", trainNum);
-        obj.put("userId", userId);
+        obj.put("username", username);
         obj.put("purchaseTime", time);
         return obj.toJSONString();
     }
 
-    public static String createRefundSuccess(int trainNum, int userId, String time){
+    public static String createRefundSuccess(int trainNum, String username, String time){
         JSONObject obj = new JSONObject();
         obj.put("command", REFUND_SUCCESS.toString());
         obj.put("trainNum", trainNum);
-        obj.put("userId", userId);
+        obj.put("username", username);
         obj.put("refundTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefreshRequest(String username){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFRESH_REQUEST.toString());
+        obj.put("username", username);
+        return obj.toJSONString();
+    }
+
+    public static String createRefreshInfo(String username, JSONObject remainedTicketInfo, JSONArray boughtTicketInfo){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFRESH_INFO.toString());
+        obj.put("username", username);
+        obj.put("ticketInfo", remainedTicketInfo);
+        obj.put("purchaseInfo", boughtTicketInfo);
         return obj.toJSONString();
     }
 
@@ -388,7 +405,7 @@ public enum Command {
 
     // Check BUY_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL
     public static boolean checkBuying(JSONObject obj){
-        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("userId")&& obj.containsKey("purchaseTime")){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("username")&& obj.containsKey("purchaseTime")){
             return true;
         }
         return false;
@@ -396,7 +413,21 @@ public enum Command {
 
     // Check REFUND_TICKET, REFUND_SUCCESS
     public static boolean checkRefundTicket(JSONObject obj){
-        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("userId")&& obj.containsKey("refundTime")){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("username")&& obj.containsKey("refundTime")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRefreshReq(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("username")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRefreshInfo(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("username")&& obj.containsKey("ticketInfo")&& obj.containsKey("purchaseInfo")){
             return true;
         }
         return false;

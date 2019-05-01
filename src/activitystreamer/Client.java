@@ -18,7 +18,7 @@ public class Client {
 	
 	private static void help(Options options){
 		String header = "An Ticket Purchaser for Unimelb COMP90020\n\n";
-		String footer = "\ncontact dev groupfor issues.";
+		String footer = "\ncontact dev group for issues.";
 		HelpFormatter formatter = new HelpFormatter();
 		formatter.printHelp("ClientEnd", header, options, footer, true);
 		System.exit(-1);
@@ -29,10 +29,8 @@ public class Client {
 		log.info("reading command line options");
 		
 		Options options = new Options();
-		options.addOption("u",true,"username");
 		options.addOption("rp",true,"remote port number");
 		options.addOption("rh",true,"remote hostname");
-		options.addOption("s",true,"secret for username");
 		
 		
 		// build the parser
@@ -58,16 +56,7 @@ public class Client {
 				help(options);
 			}
 		}
-		
-		if(cmd.hasOption("s")){
-			Settings.setSecret(cmd.getOptionValue("s"));
-		}
-		
-		if(cmd.hasOption("u")){
-			Settings.setUsername(cmd.getOptionValue("u"));
-		}
-		
-		
+
 		log.info("starting client");
 					
 		ClientSkeleton c = ClientSkeleton.getInstance();

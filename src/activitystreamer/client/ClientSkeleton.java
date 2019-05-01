@@ -13,6 +13,7 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -32,7 +33,6 @@ public class ClientSkeleton extends Thread {
     private PrintWriter outwriter;
     private JSONParser parser = new JSONParser();
     private boolean open = false;
-    private boolean redirect = false;
 
     public static ClientSkeleton getInstance() {
         if (clientSolution == null) {
@@ -62,41 +62,6 @@ public class ClientSkeleton extends Thread {
         start();
     }
 
-    public JSONObject sendActivityObject(JSONObject activityObj) {
-        JSONObject jrespond = new JSONObject();
-
-        try {
-            String str = activityObj.toJSONString();
-            log.debug("obj: " + str + " - raw: " + activityObj);
-            outwriter.println(str);
-            outwriter.flush();
-
-            log.info("send activity to server" + Settings.getRemoteHostname()
-                    + " " + Settings.getRemotePort() + " : " + str);
-            String respond = inreader.readLine();
-            jrespond = (JSONObject) parser.parse(respond);
-            log.debug(jrespond.get("command"));
-        } catch (EOFException e) {
-            log.debug("EOF:" + e.getMessage());
-        } catch (IOException e) {
-            log.debug("readline:" + e.getMessage());
-        } catch (ParseException e) {
-            log.debug(e);
-        }
-
-        //If we don't need to use this socket anymore, we can close it!
-        if (!open) {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    System.out.println("close:" + e.getMessage());
-                }
-            }
-        }
-        return jrespond;
-    }
-
     public void disconnect() {
         open = false;
         interrupt();
@@ -111,39 +76,7 @@ public class ClientSkeleton extends Thread {
 
     public void run() {
         try {
-            String username = Settings.getUsername();
-            String secret = Settings.getSecret();
-            Command userCommand;
-            //If user only inputs its username, but not its user secret. It means this user wants to register
-            //secret will be set to null after testing!
-            if ((!username.equals("anonymous")) && (secret.equals(""))) {
-                userCommand = Command.REGISTER;
-            } //Otherwise, it means the user wants to log in
-            else {
-                userCommand = Command.LOGIN;
-            }
-
-            switch (userCommand) {
-                case REGISTER: //Step 1, generate a secret for this user and print it out
-                    String userAutoSecret = UUID.randomUUID().toString();
-                    log.info("User:" + username + " Secret:" + userAutoSecret);
-                    Settings.setSecret(userAutoSecret);
-                    //Step 2, create register message and send it
-                    JSONObject messageRegister = Command.createRegister(username, userAutoSecret);
-                    log.info("Sending data...."+messageRegister.toJSONString());
-                    writeMsg(messageRegister.toJSONString());
-                    break;
-
-                case LOGIN:
-                    JSONObject messageLogin = Command.createLogin(username, secret);
-                    log.info("Sending data...." + messageLogin.toJSONString());
-                    writeMsg(messageLogin.toJSONString());
-                    break;
-                default:
-                    break;
-            }
-            
-
+            textFrame = new TextFrame(this);
             //Always listening for input stream
             while (open) {
                 String response = inreader.readLine();
@@ -169,7 +102,6 @@ public class ClientSkeleton extends Thread {
                             log.debug("Processing string: " + response + " from: " + this.socket);
                             
                             switch (responseCommand) {
-                                //If the client receives the success message, it will prompt the textframe
                                 case REGISTER_SUCCESS:
                                     if(!Command.checkValidCommandFormat2(resObj)){
                                         String invalidRegSuc = Command.createInvalidMessage("Invalid RegisterSuccess Message Format");
@@ -191,8 +123,9 @@ public class ClientSkeleton extends Thread {
                                         break;
                                     }
                                     else{
+                                        //Sending Refresh_req
+                                        writeMsg(Command.createRefreshRequest(Settings.getUsername()));
                                         open=true;
-                                        textFrame = new TextFrame(this);
                                     }
                                     break;
                                 //If the client receives the failed message, it will close the socket
@@ -220,6 +153,60 @@ public class ClientSkeleton extends Thread {
                                         log.info("Login failed, close connection...");
                                     }
                                     break;
+                                case REFRESH_INFO:
+                                    if(!Command.checkValidRefreshInfo(resObj)){
+                                        String invalidRefreshInfo = Command.createInvalidMessage("Invalid RefreshInfo Message Format");
+                                        writeMsg(invalidRefreshInfo);
+                                        open=false;
+                                        break;
+                                    }
+                                    else{
+                                        open = true;
+                                        log.info("Refreshing Display Panel");
+                                        JSONObject trainInfo = (JSONObject) resObj.get("ticketInfo");
+                                        JSONArray buyingInfo = (JSONArray) resObj.get("purchaseInfo");
+                                        textFrame.enterSellingPanel(trainInfo, buyingInfo);
+                                    }
+                                    break;
+                                case PURCHASE_SUCCESS:
+                                    if(!Command.checkBuying(resObj)){
+                                        String invalidPurchaseSucc = Command.createInvalidMessage("Invalid Purchase Success Message Format");
+                                        writeMsg(invalidPurchaseSucc);
+                                        open=false;
+                                        break;
+                                    }
+                                    else{
+                                        open = true;
+                                        log.info("Refreshing Display Panel... Purchase Success");
+                                        textFrame.purchaseSuccessMsg();
+                                    }
+                                    break;
+                                case PURCHASE_FAIL:
+                                    if(!Command.checkBuying(resObj)){
+                                        String invalidPurchaseFail = Command.createInvalidMessage("Invalid Purchase Fail Message Format");
+                                        writeMsg(invalidPurchaseFail);
+                                        open=false;
+                                        break;
+                                    }
+                                    else{
+                                        open = true;
+                                        log.info("Refreshing Display Panel... Purchase Failed");
+                                        textFrame.purchaseFailMsg();
+                                    }
+                                    break;
+                                case REFUND_SUCCESS:
+                                    if(!Command.checkRefundTicket(resObj)){
+                                        String invalidRefundSucc = Command.createInvalidMessage("Invalid Refund Success Message Format");
+                                        writeMsg(invalidRefundSucc);
+                                        open=false;
+                                        break;
+                                    }
+                                    else{
+                                        open = true;
+                                        log.info("Refreshing Display Panel... Refund Success");
+                                        textFrame.refundSuccessMsg();
+                                    }
+                                    break;
                                 case INVALID_MESSAGE:
                                     if(!Command.checkValidCommandFormat2(resObj)){
                                         String invalidInvMsg = Command.createInvalidMessage("Invalid InvalidMessage Message Format");
@@ -232,34 +219,7 @@ public class ClientSkeleton extends Thread {
                                         open = false;
                                     }
                                     break;
-                                // Redirect: close connection, start new socket and process again
-                                case REDIRECT:
-                                    if(!Command.checkValidRedirect(resObj)){
-                                        String invalidRedMsg = Command.createInvalidMessage("Invalid Redirect Message Format");
-                                        writeMsg(invalidRedMsg);
-                                        open=false;
-                                        break;
-                                    }
-                                    else{
-                                        open = false;
-                                        Settings.setRemoteHostname(resObj.get("hostname").toString());
-                                        Settings.setRemotePort(Integer.parseInt(resObj.get("port").toString()));
-                                        redirect = true; 
-                                    }                          
-                                    break;
-//                                case ACTIVITY_BROADCAST:
-//                                    if(!Command.checkValidActivityBroadcast(resObj)){
-//                                        String invalidAcMsg = Command.createInvalidMessage("Invalid ActivityBroadcast Message Format");
-//                                        writeMsg(invalidAcMsg);
-//                                        open=false;
-//                                        break;
-//                                    }
-//                                    else{
-//                                    	JSONObject onlyActivity = (JSONObject) resObj.get("activity");
-//                                	    textFrame.setOutputText(onlyActivity);
-//                                	}
-//                                	break;
-                                //If the command is not in the above command, the client will respond with an invalid message and close the connection
+
                                 default:
                                     String invalidMsg = Command.createInvalidMessage("the received message did not contain an applicable command");
                                     writeMsg(invalidMsg);
@@ -292,16 +252,8 @@ public class ClientSkeleton extends Thread {
                 try {
                     socket.close();
                     System.out.println("socket is closing...");
-                    if(redirect){
-                        if(textFrame != null){
-                            textFrame.setVisible(false);
-                            textFrame.dispose();
-                        }
-                        // start a new client                         
-                        clientSolution = new ClientSkeleton();
-                    }else {
-                    	System.exit(0);
-                    }
+                    System.exit(0);
+
                 } catch (IOException e) {
                     System.out.println("close:" + e.getMessage());
                 }             

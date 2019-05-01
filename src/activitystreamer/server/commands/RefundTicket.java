@@ -31,9 +31,18 @@ public class RefundTicket {
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            int userId = (int)message.get("userId");
+            String username = message.get("username").toString();
             int trainId = (int) message.get("trainNum");
             String refundTime = message.get("refundTime").toString();
+
+            int userId = 0;
+            String sqlUserQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
+            Statement stmt  = sqlConnection.createStatement();
+            ResultSet resultUser = stmt.executeQuery(sqlUserQuery);
+
+            while(resultUser.next()){
+                userId = resultUser.getInt("UserId");
+            }
 
             String sqlDelete = "DELETE FROM Ticket WHERE UserId = ? AND TrainId = ?";
             PreparedStatement pstmt = sqlConnection.prepareStatement(sqlDelete);
@@ -44,7 +53,6 @@ public class RefundTicket {
 
             //Change the leftTicket in the Ticket Table
             String sqlQuery = "SELECT LeftTickets FROM Train WHERE TrainId = "+ trainId + ";";
-            Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
             int leftTicketsNum = 0;
             while(result.next()){
@@ -59,7 +67,7 @@ public class RefundTicket {
             pstmt_2.executeUpdate();
 
             // Return Refund_Success Msg
-            String refundSuccess = Command.createRefundSuccess(trainId, userId, refundTime);
+            String refundSuccess = Command.createRefundSuccess(trainId, username, refundTime);
             conn.writeMsg(refundSuccess);
             log.debug(refundSuccess);
             closeConnection = false;

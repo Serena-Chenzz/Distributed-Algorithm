@@ -1,22 +1,19 @@
 package activitystreamer.client;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 import javax.swing.border.Border;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -32,92 +29,318 @@ import activitystreamer.util.Settings;
 
 @SuppressWarnings("serial")
 public class TextFrame extends JFrame implements ActionListener {
-    private JTextArea inputText;
-    private JTextArea outputText;
-    private JButton sendButton;
-    private JButton disconnectButton;
-    private JSONParser parser = new JSONParser();
+    private JTextField userText;
+    private JPasswordField passwordText;
+    private JButton loginButton;
+    private JButton registerButton;
+    private JButton[] purchaseButton;
+    private JButton[] refundButton;
+    private JButton refreshButton;
+    private JButton logoutButton;
+    private JPanel loginPanel;
+    private JPanel ticketPanel;
+    private JPanel labelPanel;
     private static final Logger log = LogManager.getLogger();
     private ClientSkeleton clientCon;
-	private static Gson gson = new Gson();
 
     
     public TextFrame(ClientSkeleton clientSkeleton){
+
+        purchaseButton = new JButton[4];
+        refundButton = new JButton[4];
         
     	this.clientCon = clientSkeleton;
-    	
-    	setTitle("ActivityStreamer Text I/O");
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new GridLayout(1,2));
-        JPanel inputPanel = new JPanel();
-        JPanel outputPanel = new JPanel();
-        inputPanel.setLayout(new BorderLayout());
-        outputPanel.setLayout(new BorderLayout());
-        Border lineBorder = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),"JSON input, to send to server");
-        inputPanel.setBorder(lineBorder);
-        lineBorder = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.lightGray),"JSON output, received from server");
-        outputPanel.setBorder(lineBorder);
-        outputPanel.setName("Text output");
-        
-        inputText = new JTextArea();
-        JScrollPane scrollPane = new JScrollPane(inputText);
-        inputPanel.add(scrollPane,BorderLayout.CENTER);
-        
-        JPanel buttonGroup = new JPanel();
-        sendButton = new JButton("Send");
-        disconnectButton = new JButton("Disconnect");
-        buttonGroup.add(sendButton);
-        buttonGroup.add(disconnectButton);
-        inputPanel.add(buttonGroup,BorderLayout.SOUTH);
-        sendButton.addActionListener(this);
-        disconnectButton.addActionListener(this);
-        
-        
-        outputText = new JTextArea();
-        scrollPane = new JScrollPane(outputText);
-        outputPanel.add(scrollPane,BorderLayout.CENTER);
-        
-        mainPanel.add(inputPanel);
-        mainPanel.add(outputPanel);
-        add(mainPanel);
-        
-        setLocationRelativeTo(null); 
-        setSize(1280,768);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
-    }
 
-    public void setOutputText(final JSONObject obj){
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        JsonParser jp = new JsonParser();
-        JsonElement je = jp.parse(obj.toJSONString());
-        String prettyJsonString = gson.toJson(je);
-        outputText.setText(prettyJsonString);
-        outputText.revalidate();
-        outputText.repaint();
+        this.setSize(1000, 350);
+        this.setTitle("Ticket Selling Application");
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        loginPanel = new JPanel();
+        ticketPanel = new JPanel();
+        labelPanel = new JPanel();
+        this.add(loginPanel);
+        loginPanel.setLayout(null);
+
+
+        JLabel userLabel = new JLabel("Username");
+        userLabel.setBounds(40, 20, 160, 50);
+        userLabel.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(userLabel);
+
+        userText = new JTextField(20);
+        userText.setBounds(200, 20, 360, 50);
+        userText.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(userText);
+
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setBounds(40, 80, 160, 50);
+        passwordLabel.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(passwordLabel);
+
+        passwordText = new JPasswordField(20);
+        passwordText.setBounds(200, 80, 360, 50);
+        passwordText.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(passwordText);
+
+        loginButton = new JButton("login");
+        loginButton.setBounds(40, 160, 160, 50);
+        loginButton.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(loginButton);
+
+        registerButton = new JButton("register");
+        registerButton.setBounds(400, 160, 160, 50);
+        registerButton.setFont(new Font("Arial", Font.PLAIN,20));
+        loginPanel.add(registerButton);
+
+        loginButton.addActionListener(this);
+        registerButton.addActionListener(this);
+
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setVisible(true);
     }
     
     public void actionPerformed(ActionEvent e) {
-		if(e.getSource()==sendButton){
-			String msg = inputText.getText().trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t", "");			
-			JSONObject actObj;
-			try {
-				actObj = (JSONObject) parser.parse(msg);
-				clientCon.writeMsg(Command.createActivityMessage(Command.ACTIVITY_MESSAGE, Settings.getUsername(), 
-						Settings.getSecret(), actObj));
-				
-			} catch (ParseException e1) {
-				log.error("invalid JSON object entered into input text field, data not sent");
-			}
-			
-		} else if(e.getSource()==disconnectButton){
-		    //When the user presses the disconnect button, it will send a LOGOUT message to the server and close the socket.
-		
-	        JSONObject logout = Command.createLogout(Settings.getUsername(), Settings.getSecret());
+		if(e.getSource()==loginButton){
+			String username = userText.getText().trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t", "");
+			String secret = new String(passwordText.getPassword());
+			Settings.setUsername(username);
+			Settings.setSecret(secret);
+
+			clientCon.writeMsg(Command.createLogin(username, secret).toJSONString());
+
+		} else if(e.getSource()==registerButton){
+            String username = userText.getText().trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t", "");
+            String secret = new String(passwordText.getPassword());
+            Settings.setUsername(username);
+            Settings.setSecret(secret);
+
+            clientCon.writeMsg(Command.createRegister(username,secret).toJSONString());
+
+		} else if(e.getSource()==refreshButton){
+		    this.remove(ticketPanel);
+            ticketPanel.removeAll();
+		    String username = Settings.getUsername();
+		    clientCon.writeMsg(Command.createRefreshRequest(username));
+
+        } else if(e.getSource()==logoutButton){
+		    JSONObject logout = Command.createLogout(Settings.getUsername(), Settings.getSecret());
 	        ClientSkeleton.getInstance().writeMsg(logout.toJSONString());
 	        log.info("User is going to log out....");
-	        
 			ClientSkeleton.getInstance().disconnect();
-		}
-	}
+
+        } else if(e.getSource()==purchaseButton[0]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createBuyTicket(100, username, strDate));
+
+        } else if(e.getSource()==refundButton[0]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createRefundTicket(100, username, strDate));
+
+        } else if(e.getSource()==purchaseButton[1]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createBuyTicket(200, username, strDate));
+
+        } else if(e.getSource()==refundButton[1]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createRefundTicket(200, username, strDate));
+
+        } else if(e.getSource()==purchaseButton[2]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createBuyTicket(300, username, strDate));
+
+        } else if(e.getSource()==refundButton[2]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createRefundTicket(300, username, strDate));
+
+        } else if(e.getSource()==purchaseButton[3]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createBuyTicket(400, username, strDate));
+
+        } else if(e.getSource()==refundButton[3]){
+            String username = Settings.getUsername();
+            Date date = new Date();
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+            String strDate = dateFormat.format(date);
+            clientCon.writeMsg(Command.createRefundTicket(400, username, strDate));
+        }
+
+
+    }
+
+	public void enterSellingPanel(JSONObject ticketInfo, JSONArray buyingInfo){
+        this.removeAll();
+        this.setVisible(false);
+
+        this.add(ticketPanel);
+        ticketPanel.setLayout(null);
+
+        JLabel userLabel = new JLabel("Username: " + Settings.getUsername());
+        userLabel.setBounds(20, 20, 200, 25);
+        userLabel.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(userLabel);
+
+        JLabel statusLabel = new JLabel("Status: Login");
+        statusLabel.setBounds(250, 20, 150, 25);
+        statusLabel.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(statusLabel);
+
+        JLabel train1Label = new JLabel("TrainNo:100 -- From Beijing To Shanghai -- Remaining Tickets:" +
+                ticketInfo.get(100));
+        train1Label.setBounds(20, 60, 500, 25);
+        train1Label.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(train1Label);
+
+        purchaseButton[0] = new JButton("Purchase");
+        purchaseButton[0].setBounds(550, 60, 100, 25);
+        purchaseButton[0].setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(purchaseButton[0]);
+        purchaseButton[0].addActionListener(this);
+
+        if(buyingInfo.contains(100)){
+            refundButton[0] = new JButton("Refund");
+            refundButton[0].setBounds(700, 60, 100, 25);
+            refundButton[0].setFont(new Font("Arial", Font.PLAIN,13));
+            ticketPanel.add(refundButton[0]);
+            refundButton[0].addActionListener(this);
+        }
+
+        JLabel train2Label = new JLabel("TrainNo:200 -- From Shanghai To Guangzhou -- Remaining Tickets:" +
+                ticketInfo.get(200));
+        train2Label.setBounds(20, 100, 500, 25);
+        train2Label.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(train2Label);
+
+        purchaseButton[1] = new JButton("Purchase");
+        purchaseButton[1].setBounds(550, 100, 100, 25);
+        purchaseButton[1].setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(purchaseButton[1]);
+        purchaseButton[1].addActionListener(this);
+
+        if(buyingInfo.contains(200)){
+            refundButton[1] = new JButton("Refund");
+            refundButton[1].setBounds(700, 100, 100, 25);
+            refundButton[1].setFont(new Font("Arial", Font.PLAIN,13));
+            ticketPanel.add(refundButton[1]);
+            refundButton[1].addActionListener(this);
+        }
+
+        JLabel train3Label = new JLabel("TrainNo:300 -- From Beijing To Tianjin -- Remaining Tickets:" +
+                ticketInfo.get(300));
+        train3Label.setBounds(20, 140, 500, 25);
+        train3Label.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(train3Label);
+
+        purchaseButton[2] = new JButton("Purchase");
+        purchaseButton[2].setBounds(550, 140, 100, 25);
+        purchaseButton[2].setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(purchaseButton[2]);
+        purchaseButton[2].addActionListener(this);
+
+        if(buyingInfo.contains(300)){
+            refundButton[2] = new JButton("Refund");
+            refundButton[2].setBounds(700, 140, 100, 25);
+            refundButton[2].setFont(new Font("Arial", Font.PLAIN,13));
+            ticketPanel.add(refundButton[0]);
+            refundButton[2].addActionListener(this);
+        }
+
+        JLabel train4Label = new JLabel("TrainNo:400 -- From Shanghai To Nanjing -- Remaining Tickets:" +
+                ticketInfo.get(400));
+        train4Label.setBounds(20, 180, 500, 25);
+        train4Label.setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(train4Label);
+
+        purchaseButton[3] = new JButton("Purchase");
+        purchaseButton[3].setBounds(550, 180, 100, 25);
+        purchaseButton[3].setFont(new Font("Arial", Font.PLAIN,13));
+        ticketPanel.add(purchaseButton[3]);
+        purchaseButton[3].addActionListener(this);
+
+        if(buyingInfo.contains(400)){
+            refundButton[3] = new JButton("Refund");
+            refundButton[3].setBounds(700, 180, 100, 25);
+            refundButton[3].setFont(new Font("Arial", Font.PLAIN,13));
+            ticketPanel.add(refundButton[0]);
+            refundButton[3].addActionListener(this);
+        }
+
+        // Add two buttons at the end: Refresh & Logout
+        refreshButton = new JButton("Refresh");
+        refreshButton.setBounds(20, 220, 160, 50);
+        refreshButton.setFont(new Font("Arial", Font.PLAIN,20));
+        ticketPanel.add(refreshButton);
+        refreshButton.addActionListener(this);
+
+        logoutButton = new JButton("Logout");
+        logoutButton.setBounds(200, 220, 160, 50);
+        logoutButton.setFont(new Font("Arial", Font.PLAIN,20));
+        ticketPanel.add(logoutButton);
+        logoutButton.addActionListener(this);
+
+        this.setVisible(true);
+    }
+
+    public void purchaseSuccessMsg(){
+        this.removeAll();
+        this.setVisible(false);
+        labelPanel.removeAll();
+
+        JLabel userLabel = new JLabel("User: " + Settings.getUsername() + " has successfully purchased the ticket.");
+        userLabel.setBounds(40, 20, 800, 50);
+        userLabel.setFont(new Font("Arial", Font.PLAIN,18));
+        labelPanel.add(userLabel);
+
+        this.add(labelPanel);
+        this.setVisible(true);
+    }
+
+    public void purchaseFailMsg(){
+        this.removeAll();
+        this.setVisible(false);
+        labelPanel.removeAll();
+
+        JLabel userLabel = new JLabel("User: " + Settings.getUsername() + " failed to purchase the ticket. Be quick next time!");
+        userLabel.setBounds(40, 20, 800, 50);
+        userLabel.setFont(new Font("Arial", Font.PLAIN,18));
+        labelPanel.add(userLabel);
+
+        this.add(labelPanel);
+        this.setVisible(true);
+    }
+
+    public void refundSuccessMsg(){
+        this.removeAll();
+        this.setVisible(false);
+        labelPanel.removeAll();
+
+        JLabel userLabel = new JLabel("User: " + Settings.getUsername() + " has successfully refunded the ticket.");
+        userLabel.setBounds(40, 20, 800, 50);
+        userLabel.setFont(new Font("Arial", Font.PLAIN,18));
+        labelPanel.add(userLabel);
+
+        this.add(labelPanel);
+        this.setVisible(true);
+    }
+
 }

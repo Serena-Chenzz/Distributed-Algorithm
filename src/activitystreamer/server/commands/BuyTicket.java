@@ -34,17 +34,25 @@ public class BuyTicket {
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            int userId = (int)message.get("userId");
+            String username = message.get("username").toString();
             int trainId = (int) message.get("trainNum");
             String purchaseTime = message.get("purchaseTime").toString();
 
+            int userId = 0;
+            String sqlUserQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
+            Statement stmt  = sqlConnection.createStatement();
+            ResultSet resultUser = stmt.executeQuery(sqlUserQuery);
+
+            while(resultUser.next()){
+                userId = resultUser.getInt("UserId");
+            }
+
             //First check if the user has already bought the ticket for this train
             String sqlCheck = "SELECT * FROM Ticket WHERE UserId ="+userId+" AND TrainId = "+trainId+";";
-            Statement stmt  = sqlConnection.createStatement();
             ResultSet checkResult = stmt.executeQuery(sqlCheck);
             if(checkResult.next()){
                 // Sending back Purchase_Fail Info. The user has already bought the ticket
-                String purchaseFail = Command.createPurchaseFail(trainId, userId, purchaseTime);
+                String purchaseFail = Command.createPurchaseFail(trainId, username, purchaseTime);
                 conn.writeMsg(purchaseFail);
                 log.debug(purchaseFail);
                 closeConnection = false;
@@ -76,14 +84,14 @@ public class BuyTicket {
                     log.info("Adding the ticket to the ticket table");
 
                     // Sending back Purchase_Success Info
-                    String purchaseSuccess = Command.createPurchaseSuccess(trainId, userId, purchaseTime);
+                    String purchaseSuccess = Command.createPurchaseSuccess(trainId, username, purchaseTime);
                     conn.writeMsg(purchaseSuccess);
                     log.debug(purchaseSuccess);
                     closeConnection = false;
                 }
                 else{
                     // Sending back Purchase_Fail Info
-                    String purchaseFail = Command.createPurchaseFail(trainId, userId, purchaseTime);
+                    String purchaseFail = Command.createPurchaseFail(trainId, username, purchaseTime);
                     conn.writeMsg(purchaseFail);
                     log.debug(purchaseFail);
                     closeConnection = false;
