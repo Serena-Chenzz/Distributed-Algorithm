@@ -22,7 +22,7 @@ public class Prepare {
 	private static boolean closeConnection=false;
 	
 	public Prepare(String msg, Connection con) {
-
+		Prepare.conn = con;
 		try{
 			UniqueID proposalID, promisedID,acceptedID;
 			String acceptedValue;
@@ -35,19 +35,16 @@ public class Prepare {
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();
-			acceptedID = Control.getInstance().getAccpetedID();
 			acceptedValue = Control.getInstance().getAccpetedValue();
 
-			if (promisedID != null && proposalID.equals(promisedID)) { // it is a duplicate message
-				sendPromise(proposalID, acceptedID, acceptedValue);
-			}
-			else if (promisedID == null || proposalID.largerThan(promisedID)) { // it is greater than promisedID, then change the promisedID
+
+			if (promisedID == null || proposalID.largerThan(promisedID)) { // it is greater than promisedID, then change the promisedID
 				Control.getInstance().setPromisedID(proposalID);
-				sendPromise(proposalID, acceptedID, acceptedValue);
+				promisedID = proposalID;
+				sendPromise(proposalID, promisedID, acceptedValue);
 			}
-			else {
+			else
 				sendNack(proposalID);
-			}
 		}
 		catch (ParseException e) {
 			log.debug(e);
@@ -60,12 +57,14 @@ public class Prepare {
 				acceptedID.getLamportTimeStamp(), acceptedID.getServerID(),acceptedValue);
 		conn.writeMsg(promiseMsg);
 		log.debug(promiseMsg);
+		log.info("Sending PROMISE to " + conn.getRemoteId());
 	}
 	
 	public void sendNack(UniqueID proposalID) {
 		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
 		conn.writeMsg(nackMsg);
 		log.debug(nackMsg);
+		log.info("Sending NACK to " + conn.getRemoteId());
 	}
 
 	public boolean getCloseCon() {

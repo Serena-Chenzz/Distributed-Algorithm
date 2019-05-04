@@ -14,9 +14,9 @@ import activitystreamer.server.Message;
 public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
-    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
+    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE, DECIDE,
 
-    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS, DECIDE, REFRESH_REQUEST,
+    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS,REFRESH_REQUEST,
     REFRESH_INFO,ABORT
     ;
 
@@ -199,8 +199,8 @@ public enum Command {
     public static String createAccepted(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", ACCEPTED.toString());
-        obj.put("acceptedLamportTimeStamp", timeStamp);
-        obj.put("acceptedServerID", serverID);
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
         return obj.toJSONString();
     }
 
@@ -212,12 +212,11 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createPropose(int timeStamp, String serverID, String value){
+    public static String createPropose(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", PROPOSE.toString());
         obj.put("lamportTimeStamp", timeStamp);
         obj.put("serverID", serverID);
-        obj.put("value",value);
         return obj.toJSONString();
     }
 
@@ -305,9 +304,11 @@ public enum Command {
     
 
     // added in the evening of 04-28
-    public static String createDecide(String value){
+    public static String createDecide(String value, int timeStamp,String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", DECIDE.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
         obj.put("value", value);
         return obj.toJSONString();
     }
@@ -319,6 +320,9 @@ public enum Command {
         obj.put("serverID", serverID);
         return obj.toJSONString();
     }
+
+
+
 
     
     //The following methods are used to check if a command message is in a right format
@@ -381,7 +385,7 @@ public enum Command {
 
     //For Accepted
     public static boolean checkValidAccepted(JSONObject obj){
-        if (obj.containsKey("command")&& obj.containsKey("acceptedLamportTimeStamp")&& obj.containsKey("acceptedServerID")){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
         return false;
@@ -397,7 +401,7 @@ public enum Command {
 
     //For Promise
     public static boolean checkValidPromise(JSONObject obj){
-        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")&& obj.containsKey("acceptedLamportTimeStamp")
+        if (obj.containsKey("command")&& obj.containsKey("proposalLamportTimeStamp")&& obj.containsKey("proposalServerID")&& obj.containsKey("acceptedLamportTimeStamp")
                 && obj.containsKey("acceptedServerID")&& obj.containsKey("acceptedValue")){
             return true;
         }
@@ -413,7 +417,7 @@ public enum Command {
     }
 
     //For Propose
-    public static boolean checkValidPropose(JSONObject obj){
+    public static boolean checkValidSelection(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
@@ -459,5 +463,7 @@ public enum Command {
         }
         return false;
     }
+
+
 
 }

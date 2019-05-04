@@ -40,16 +40,14 @@ public class Accept {
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();
-			acceptedID = Control.getInstance().getAccpetedID();
-			acceptedValue = Control.getInstance().getAccpetedValue();
+
 
 			if (promisedID == null || proposalID.largerThan(promisedID)
 					|| proposalID.equals(promisedID)) {
 				Control.getInstance().setPromisedID(proposalID);
 				Control.getInstance().setAccpetedID(proposalID);
 				Control.getInstance().setAccpetedValue(value);
-
-				sendAccepted(acceptedID);
+				sendAccepted(promisedID);
 			}
 			else {
 				sendNack(proposalID);
@@ -65,6 +63,7 @@ public class Accept {
 		String acceptedMsg = Command.createAccepted(acceptedID.getLamportTimeStamp(), acceptedID.getServerID());
 		conn.writeMsg(acceptedMsg);
 		log.debug(acceptedMsg);
+		log.info("Sending ACCEPTED to " + conn.getRemoteId());
 	}
 
 	public void sendNack(UniqueID proposalID) {
@@ -72,6 +71,7 @@ public class Accept {
 		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
 		conn.writeMsg(nackMsg);
 		log.debug(nackMsg);
+		log.info("Sending NACK to " + conn.getRemoteId());
 
 	}
 

@@ -37,7 +37,7 @@ public class Control extends Thread {
     private static UniqueID promisedID;
     private static String accpetedValue;
     private static String serverID = UUID.randomUUID().toString();
-
+    private static int lamportTimeStamp = 0;
     // added in the evening of 04-28
     private static UniqueID proposalID = new UniqueID(0,serverID);
     private static HashMap<UniqueID, String> promiseSet = new HashMap<>();
@@ -45,6 +45,16 @@ public class Control extends Thread {
     private static String proposedValue;
 
     private static Connection leader;
+    private static String leaderAddress;
+
+    public static void setLeaderAddress(String leaderAddress) {
+        Control.leaderAddress = leaderAddress;
+    }
+
+    public String getLeaderAddress()
+    {
+        return leaderAddress;
+    }
 
     public synchronized String getproposedValue(){ return proposedValue; }
     public synchronized void setProposedValue(String value){ proposedValue = value;}
@@ -86,10 +96,19 @@ public class Control extends Thread {
 
     public synchronized void clearAckNumber(){ ackNumber = 0; }
 
-    public void addLamportTimeStamp(){ proposalID.addLamportTimeStamp();}
+    public void addLamportTimeStamp(){ lamportTimeStamp++;}
 
 
 
+    public void sendSelection(){
+        lamportTimeStamp++;
+        proposalID = new UniqueID(lamportTimeStamp,uniqueId);
+        String msg = Command.createPropose(lamportTimeStamp,uniqueId);
+        for (Connection connection:neighbors){
+            Propose propose = new Propose(msg,connection);
+        }
+        log.info("Start Selection on " + uniqueId);
+    }
 
 
     
@@ -115,7 +134,9 @@ public class Control extends Thread {
         } catch (UnknownHostException e) {
             log.error(e);
         }
-    	
+
+
+
         // initialize the connections array
         connections = new HashMap<Connection,Boolean>();
         connectionClients = new ArrayList<Connection>();
@@ -260,6 +281,17 @@ public class Control extends Thread {
 //                                System.out.println("Here");
 //                                return true;
 //                            }
+                            if (leaderAddress == null) {
+                                sendSelection();
+                                log.info("Send Selection to " + con.getRemoteId());
+                            }
+                            else
+                            {
+                                String decideMsg = Command.createDecide(leaderAddress,accpetedID.getLamportTimeStamp(),accpetedID.getServerID());
+                                con.writeMsg(decideMsg);
+                                log.info("Sending Decide to " + con.getRemoteId());
+                            }
+
                             return auth.getResponse();
                             
                         case AUTHENTICATION_SUCCESS:
@@ -375,8 +407,12 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                Accept accept = new Accept(msg, con);
-                                return accept.getCloseCon();
+                                for (Connection connection:neighbors)
+                                {
+                                    Accept accept = new Accept(msg, connection);
+
+                                }
+                                return false;
                             }
 
                         case ACCEPTED:
@@ -386,20 +422,15 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                Accepted accepted = new Accepted(msg, con);
-                                return accepted.getCloseCon();
+                                for (Connection connection:neighbors)
+                                {
+                                    Accepted accepted = new Accepted(msg, connection);
+                                }
+                                return false;
                             }
 
-                        case PREPARE:
-                            if (!Command.checkValidPrepare(userInput)){
-                                String invalidPrepare = Command.createInvalidMessage("Invalid Prepare Message Format");
-                                con.writeMsg(invalidPrepare);
-                                return true;
-                            }
-                            else{
-                                Prepare prepare = new Prepare(msg, con);
-                                return prepare.getCloseCon();
-                            }
+
+
 
                         case REFRESH_REQUEST:
                             if (!Command.checkValidRefreshReq(userInput)){
@@ -434,48 +465,62 @@ public class Control extends Thread {
                             }
                         case PROMISE:
                             if (!Command.checkValidPromise(userInput)){
-                                String invalidPromise = Command.createInvalidMessage("Invalid Accept Message Format");
+                                String invalidPromise = Command.createInvalidMessage("Invalid Promise Message Format");
                                 con.writeMsg(invalidPromise);
                                 return true;
                             }
                             else{
-                                Promise promise = new Promise(msg, con);
-                                return promise.getCloseCon();
+                                for (Connection connection:neighbors)
+                                {
+                                    Promise promise = new Promise(msg, connection);
+
+
+                                }
+
+                                return false;
                             }
 
                         case NACK:
                             if (!Command.checkValidNack(userInput)){
-                                String invalidNack = Command.createInvalidMessage("Invalid Accept Message Format");
+                                String invalidNack = Command.createInvalidMessage("Invalid Nack Message Format");
                                 con.writeMsg(invalidNack);
                                 return true;
                             }
 
                             else{
-                                Nack nack = new Nack(msg, con);
-                                return nack.getCloseCon();
+                                Control.getInstance().clearAckNumber();
+                                Control.getInstance().clearPromiseSet();
+                                log.info("Received NACK for " + proposalID.getServerID() + " " + Integer.toString(proposalID.getLamportTimeStamp()));
+                                return false;
                             }
 
-                        case PROPOSE:
-                            if (!Command.checkValidPropose(userInput)){
-                                String invalidPropose = Command.createInvalidMessage("Invalid Propose Message Format");
-                                con.writeMsg(invalidPropose);
+                        case PREPARE:
+                            // So receiving a selection is equal to receiving a PREPARE message
+                            // And the response is a PROMISE message
+                            if (!Command.checkValidPrepare(userInput)){
+                                String invalidPrepare = Command.createInvalidMessage("Invalid Propose Message Format");
+                                con.writeMsg(invalidPrepare);
                                 return true;
                             }
                             else{
-                                Propose propose = new Propose(msg, con);
-                                return propose.getCloseCon();
+                                for (Connection connection:neighbors)
+                                {
+                                    Prepare prepare = new Prepare(msg, connection);
+
+                                }
+                                return false;
                             }
 
-//                        case DECIDE:
-//                            if (!Command.checkValidDecide(userInput)){
-//                                String invalidDecide = Command.createInvalidMessage("Invalid Decide Message Format");
-//                                con.writeMsg(invalidDecide);
-//                                return true;
-//                            }
-//                            else{
-//                                Decide decide = new Decide(msg, con);
-//                                return decide.getCloseCon();
-//                            }
+                        case DECIDE:
+                            if (!Command.checkValidDecide(userInput)){
+                                String invalidDecide = Command.createInvalidMessage("Invalid Decide Message Format");
+                                con.writeMsg(invalidDecide);
+                                return true;
+                            }
+                            else{
+                                Decide decide = new Decide(msg,con);
+                                return decide.getCloseCon();
+                            }
 
                         case INVALID_MESSAGE:
                             //First, check its informarion format
@@ -577,11 +622,15 @@ public class Control extends Thread {
         return value;
     }
 
-    public synchronized void setAccpetedID(UniqueID ID) {accpetedID = ID;}
+    public synchronized void setAccpetedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
-    public synchronized void setPromisedID(UniqueID ID) {promisedID = ID;}
+    public synchronized void setPromisedID(UniqueID ID) {
 
-    public synchronized void setAccpetedValue(String value) {accpetedValue = value;}
+        promisedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());
+        log.info("PromisedID Here " + promisedID.getServerID());
+    }
+
+    public synchronized void setAccpetedValue(String value) {accpetedValue = value;leaderAddress = value;}
 
     public final void setTerm(boolean t) {
         term = t;

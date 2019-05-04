@@ -35,7 +35,9 @@ public class Promise {
             String proposalServerID = message.get("proposalServerID").toString();
             int acceptedLamportTimeStamp = Integer.parseInt(message.get("acceptedLamportTimeStamp").toString());
             String acceptedServerID = message.get("acceptedServerID").toString();
-            String acceptedValue = message.get("acceptedValue").toString();
+            String acceptedValue = null;
+            if (message.get("acceptedValue") != null)
+                acceptedValue = message.get("acceptedValue").toString();
 
             proposalID = new UniqueID(proposalLamportTimeStamp, proposalServerID);
             promisedID = new UniqueID(acceptedLamportTimeStamp,acceptedServerID);
@@ -46,10 +48,11 @@ public class Promise {
                 {
                     String largestAcceptedValue = Control.getInstance().getAcceptedValueWithLargestProposalID(promisedID);
                     if (largestAcceptedValue == null)
-                        Control.getInstance().setAccpetedValue(Control.getInstance().getproposedValue());
+                        Control.getInstance().setAccpetedValue(Control.getInstance().getUniqueId());
                     else
                         Control.getInstance().setAccpetedValue(largestAcceptedValue);
                     sendAccept(proposalID,Control.getInstance().getAccpetedValue());
+                    System.out.println("Proposer Accepted Value " + Control.getInstance().getAccpetedValue());
                 }
             }
         }catch (ParseException e) {
@@ -63,6 +66,7 @@ public class Promise {
         String acceptMsg = Command.createAccept(proposalID.getLamportTimeStamp(), proposalID.getServerID(), accepteValue);
         conn.writeMsg(acceptMsg);
         log.debug(acceptMsg);
+        log.info("Sending Accept to " + conn.getRemoteId());
     }
     public boolean getCloseCon() {
         return closeConnection;

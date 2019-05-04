@@ -32,13 +32,15 @@ public class Accepted {
 
             int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
             String serverID = message.get("serverID").toString();
-            String value = message.get("value").toString();
             proposalID = new UniqueID(lamportTimeStamp, serverID);
 
             if (proposalID.equals(Control.getInstance().getProposalID())) {
                 Control.getInstance().addAckNumber();
-                if (Control.getInstance().getAckNumber() == (Control.getInstance().getNeighbors().size() / 2 + 1))
-                    sendDecide(Control.getInstance().getAccpetedValue());
+                if (Control.getInstance().getAckNumber() == (Control.getInstance().getNeighbors().size() / 2 + 1)) {
+                    sendDecide(Control.getInstance().getAccpetedValue(), proposalID);
+                    Control.getInstance().setAccpetedID(proposalID);
+
+                }
             }
 
         }catch (ParseException e) {
@@ -47,8 +49,8 @@ public class Accepted {
 
     }
 
-    public void sendDecide(String acceptedValue) {
-        String decideMsg = Command.createDecide(acceptedValue);
+    public void sendDecide(String acceptedValue,UniqueID proposalID) {
+        String decideMsg = Command.createDecide(acceptedValue,proposalID.getLamportTimeStamp(),proposalID.getServerID());
         conn.writeMsg(decideMsg);
         log.debug(decideMsg);
     }

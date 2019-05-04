@@ -54,7 +54,7 @@ public class ServerAnnounce extends Thread{
 						);
 					}
 					 
-					Control.getInstance().broadcast(serverAnnounce.toJSONString());
+					//Control.getInstance().broadcast(serverAnnounce.toJSONString());
 					Thread.sleep(Settings.getActivityInterval());
 				} catch (InterruptedException e) {
 					log.info("received an interrupt, system is shutting down");
@@ -75,7 +75,7 @@ public class ServerAnnounce extends Thread{
             con.closeCon();
         }
             
-		Control.getInstance().listenAgain();;
+		Control.getInstance().listenAgain();
     }
     
     public static boolean doActivity() {

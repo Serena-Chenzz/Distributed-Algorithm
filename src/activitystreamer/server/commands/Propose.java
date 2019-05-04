@@ -30,8 +30,6 @@ public class Propose {
             JSONObject message = (JSONObject) parser.parse(msg);
             int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
             String serverID = message.get("serverID").toString();
-            String value = message.get("value").toString();
-            Control.getInstance().setProposedValue(value);
             proposalID = new UniqueID(lamportTimeStamp, serverID);
             Control.getInstance().clearPromiseSet();
             Control.getInstance().clearAckNumber();
