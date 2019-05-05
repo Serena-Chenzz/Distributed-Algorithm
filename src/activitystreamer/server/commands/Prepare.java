@@ -39,6 +39,7 @@ public class Prepare {
 
 
 			if (promisedID == null || proposalID.largerThan(promisedID)) { // it is greater than promisedID, then change the promisedID
+				log.info("Prepare Phase Larger Than");
 				Control.getInstance().setPromisedID(proposalID);
 				promisedID = proposalID;
 				sendPromise(proposalID, promisedID, acceptedValue);

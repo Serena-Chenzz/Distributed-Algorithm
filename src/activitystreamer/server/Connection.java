@@ -150,6 +150,21 @@ public class Connection extends Thread {
                         open = false;
                     }
                 }
+                if (remoteId.equals(Control.getInstance().getLeaderAddress()))
+                {
+
+                    for (Connection connection:Control.getInstance().getNeighbors())
+                    {
+                        if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
+                        {
+                            Control.getInstance().getNeighbors().remove(connection);
+                            Control.getInstance().setAccpetedValue(null);
+                            break;
+                        }
+                    }
+                    Control.getInstance().clearAcceptor();
+                    Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                }
             }
             
             catch (IOException e) {

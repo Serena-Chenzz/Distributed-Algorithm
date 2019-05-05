@@ -17,13 +17,13 @@ import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
 public class Promise {
-    private static Connection conn;
+    //private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
 
-    public Promise(String msg, Connection con) {
+    public Promise(String msg) {
 
-        Promise.conn = con;
+        //Promise.conn = con;
         try{
 
             UniqueID proposalID, promisedID;
@@ -64,9 +64,11 @@ public class Promise {
     public void sendAccept(UniqueID proposalID, String accepteValue) {
 
         String acceptMsg = Command.createAccept(proposalID.getLamportTimeStamp(), proposalID.getServerID(), accepteValue);
-        conn.writeMsg(acceptMsg);
-        log.debug(acceptMsg);
-        log.info("Sending Accept to " + conn.getRemoteId());
+        for(Connection connection:Control.getInstance().getNeighbors()) {
+            connection.writeMsg(acceptMsg);
+            log.debug(acceptMsg);
+            log.info("Sending Accept to " + connection.getRemoteId());
+        }
     }
     public boolean getCloseCon() {
         return closeConnection;

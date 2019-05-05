@@ -48,6 +48,7 @@ public class Nack {
         String nackMsg = Command.createAbort(proposalID.getLamportTimeStamp(), proposalID.getServerID());
         Control.getInstance().clearAckNumber();
         Control.getInstance().clearPromiseSet();
+        Control.getInstance().clearAcceptor();
         log.debug(nackMsg);
         log.info("Now Abort Proposal " + proposalID.getServerID() + " " + proposalID.getLamportTimeStamp());
     }

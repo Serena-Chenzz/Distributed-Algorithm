@@ -43,6 +43,7 @@ public class Control extends Thread {
     private static HashMap<UniqueID, String> promiseSet = new HashMap<>();
     private static int ackNumber = 0;
     private static String proposedValue;
+    private static int neighbors_num = -1;
 
     private static Connection leader;
     private static String leaderAddress;
@@ -73,16 +74,16 @@ public class Control extends Thread {
     public synchronized UniqueID getPromisedID() {return promisedID;}
 
     public synchronized String getAccpetedValue() {return accpetedValue;}
-
+    public synchronized int getLamportTimeStamp() {return lamportTimeStamp;}
 
 
     public synchronized UniqueID getProposalID() {return proposalID;}
     
-    public synchronized static ArrayList<Connection> getNeighbors(){
+    public synchronized ArrayList<Connection> getNeighbors(){
         return neighbors;
     }
 
-    public synchronized static HashMap<UniqueID,String> getPromiseSet(){
+    public synchronized HashMap<UniqueID,String> getPromiseSet(){
         return promiseSet;
     }
 
@@ -100,10 +101,11 @@ public class Control extends Thread {
 
 
 
-    public void sendSelection(){
+    public void sendSelection(int tempStamp){
         lamportTimeStamp++;
-        proposalID = new UniqueID(lamportTimeStamp,uniqueId);
-        String msg = Command.createPropose(lamportTimeStamp,uniqueId);
+        proposalID = new UniqueID(tempStamp,uniqueId);
+        setPromisedID(proposalID);
+        String msg = Command.createPropose(tempStamp,uniqueId);
         for (Connection connection:neighbors){
             Propose propose = new Propose(msg,connection);
         }
@@ -281,17 +283,18 @@ public class Control extends Thread {
 //                                System.out.println("Here");
 //                                return true;
 //                            }
-                            if (leaderAddress == null) {
-                                sendSelection();
-                                log.info("Send Selection to " + con.getRemoteId());
-                            }
-                            else
-                            {
-                                String decideMsg = Command.createDecide(leaderAddress,accpetedID.getLamportTimeStamp(),accpetedID.getServerID());
-                                con.writeMsg(decideMsg);
-                                log.info("Sending Decide to " + con.getRemoteId());
-                            }
-
+//                            if (leaderAddress == null) {
+//                                if (neighbors.size() > 0)
+//                                    sendSelection();
+//                                log.info("Send Selection to " + con.getRemoteId());
+//                            }
+//                            else
+//                            {
+//                                String decideMsg = Command.createDecide(leaderAddress,accpetedID.getLamportTimeStamp(),accpetedID.getServerID());
+//                                con.writeMsg(decideMsg);
+//                                log.info("Sending Decide to " + con.getRemoteId());
+//                            }
+//                            sendSelection();
                             return auth.getResponse();
                             
                         case AUTHENTICATION_SUCCESS:
@@ -325,6 +328,10 @@ public class Control extends Thread {
 //                                if (con.getRemoteId().equals("10.0.0.42 5000")){
 //                                    return true;
 //                                }
+                                log.info(neighbors.size());
+                                log.info(neighborInfo.size());
+                                if (neighbors.size() == (neighborInfo.size() + 1))
+                                    sendSelection(Integer.MAX_VALUE);
                                 return false;
                             }
                             return true;
@@ -407,11 +414,7 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                for (Connection connection:neighbors)
-                                {
-                                    Accept accept = new Accept(msg, connection);
-
-                                }
+                                Accept accept = new Accept(msg, con);
                                 return false;
                             }
 
@@ -422,15 +425,9 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                for (Connection connection:neighbors)
-                                {
-                                    Accepted accepted = new Accepted(msg, connection);
-                                }
+                                Accepted accepted = new Accepted(msg);
                                 return false;
                             }
-
-
-
 
                         case REFRESH_REQUEST:
                             if (!Command.checkValidRefreshReq(userInput)){
@@ -470,13 +467,7 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                for (Connection connection:neighbors)
-                                {
-                                    Promise promise = new Promise(msg, connection);
-
-
-                                }
-
+                                Promise promise = new Promise(msg);
                                 return false;
                             }
 
@@ -503,11 +494,7 @@ public class Control extends Thread {
                                 return true;
                             }
                             else{
-                                for (Connection connection:neighbors)
-                                {
-                                    Prepare prepare = new Prepare(msg, connection);
-
-                                }
+                                Prepare prepare = new Prepare(msg, con);
                                 return false;
                             }
 
@@ -623,6 +610,21 @@ public class Control extends Thread {
     }
 
     public synchronized void setAccpetedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+
+    public synchronized void setProposalID(UniqueID ID) {proposalID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+
+    public synchronized void clearAcceptor()
+    {
+        promisedID = null;
+        accpetedID = null;
+        accpetedValue = null;
+    }
+
+    public synchronized void clearProposer()
+    {
+        promisedID = null;
+        accpetedID = null;
+    }
 
     public synchronized void setPromisedID(UniqueID ID) {
 

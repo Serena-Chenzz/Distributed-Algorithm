@@ -44,10 +44,11 @@ public class Accept {
 
 			if (promisedID == null || proposalID.largerThan(promisedID)
 					|| proposalID.equals(promisedID)) {
+
 				Control.getInstance().setPromisedID(proposalID);
 				Control.getInstance().setAccpetedID(proposalID);
 				Control.getInstance().setAccpetedValue(value);
-				sendAccepted(promisedID);
+				sendAccepted(proposalID);
 			}
 			else {
 				sendNack(proposalID);

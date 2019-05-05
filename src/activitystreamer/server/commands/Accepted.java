@@ -17,13 +17,12 @@ import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
 public class Accepted {
-    private static Connection conn;
+    //private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
 
-    public Accepted(String msg, Connection con) {
+    public Accepted(String msg) {
 
-        Accepted.conn = con;
         try{
             UniqueID proposalID;
 
@@ -51,8 +50,16 @@ public class Accepted {
 
     public void sendDecide(String acceptedValue,UniqueID proposalID) {
         String decideMsg = Command.createDecide(acceptedValue,proposalID.getLamportTimeStamp(),proposalID.getServerID());
-        conn.writeMsg(decideMsg);
-        log.debug(decideMsg);
+        log.info("Now there are " + Integer.toString(Control.getInstance().getNeighbors().size()) + " neighbors");
+        Control.getInstance().setAccpetedValue(acceptedValue);
+        Control.getInstance().clearAckNumber();
+        Control.getInstance().clearPromiseSet();
+        for (Connection connection:Control.getInstance().getNeighbors())
+        {
+            connection.writeMsg(decideMsg);
+            log.debug("Sending Decide to " + connection.getRemoteId() + " " + decideMsg);
+        }
+        Control.getInstance().clearAcceptor();
     }
 
     public boolean getCloseCon() {

@@ -45,12 +45,11 @@ public class Decide{ //extends Thread
             Control.getInstance().setAccpetedID(proposalID);
             Control.getInstance().setPromisedID(proposalID);
             Control.getInstance().setAccpetedValue(value);
-
             Decide.conn = con;
             //start();
             log.info("Learner Decided value " + value);
             log.info("Learned from Proposal " + proposalID.getServerID() + " " + Integer.toString(proposalID.getLamportTimeStamp()));
-
+            Control.getInstance().clearAcceptor();
         }catch (ParseException e) {
             log.debug(e);
         }
