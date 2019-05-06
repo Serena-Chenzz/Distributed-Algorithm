@@ -36,8 +36,8 @@ public class Accepted {
             if (proposalID.equals(Control.getInstance().getProposalID())) {
                 Control.getInstance().addAckNumber();
                 if (Control.getInstance().getAckNumber() == (Control.getInstance().getNeighbors().size() / 2 + 1)) {
-                    sendDecide(Control.getInstance().getAccpetedValue(), proposalID);
-                    Control.getInstance().setAccpetedID(proposalID);
+                    sendDecide(Control.getInstance().getAccpetedValue());
+                    Control.getInstance().setAcceptedID(proposalID);
 
                 }
             }
@@ -48,10 +48,10 @@ public class Accepted {
 
     }
 
-    public void sendDecide(String acceptedValue,UniqueID proposalID) {
-        String decideMsg = Command.createDecide(acceptedValue,proposalID.getLamportTimeStamp(),proposalID.getServerID());
+    public void sendDecide(String acceptedValue) {
+        String decideMsg = Command.createDecide(acceptedValue);
         log.info("Now there are " + Integer.toString(Control.getInstance().getNeighbors().size()) + " neighbors");
-        Control.getInstance().setAccpetedValue(acceptedValue);
+        Control.getInstance().setAcceptedValue(acceptedValue);
         Control.getInstance().clearAckNumber();
         Control.getInstance().clearPromiseSet();
         for (Connection connection:Control.getInstance().getNeighbors())

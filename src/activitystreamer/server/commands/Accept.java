@@ -46,8 +46,8 @@ public class Accept {
 					|| proposalID.equals(promisedID)) {
 
 				Control.getInstance().setPromisedID(proposalID);
-				Control.getInstance().setAccpetedID(proposalID);
-				Control.getInstance().setAccpetedValue(value);
+				Control.getInstance().setAcceptedID(proposalID);
+				Control.getInstance().setAcceptedValue(value);
 				sendAccepted(proposalID);
 			}
 			else {

@@ -47,7 +47,27 @@ public class Control extends Thread {
 
     private static Connection leader;
     private static String leaderAddress;
-
+    private static final HashSet<Command> clientCommands = new HashSet<Command>() {{
+        add(Command.LOGIN);
+        add(Command.BUY_TICKET);
+        add(Command.PURCHASE_SUCCESS);
+        add(Command.INVALID_MESSAGE);
+        add(Command.LOGIN_SUCCESS);
+        add(Command.LOGIN_FAILED);
+        add(Command.LOGOUT);
+        add(Command.ACTIVITY_MESSAGE);
+        add(Command.ACTIVITY_BROADCAST);
+        add(Command.REFRESH_INFO);
+        add(Command.REFRESH_REQUEST);
+        add(Command.REGISTER);
+        add(Command.REGISTER_FAILED);
+        add(Command.REGISTER_SUCCESS);
+        add(Command.BUY_TICKET);
+        add(Command.REFUND_TICKET);
+        add(Command.REFUND_SUCCESS);
+        add(Command.PURCHASE_FAIL);
+        add(Command.PURCHASE_SUCCESS);
+    }};
     public static void setLeaderAddress(String leaderAddress) {
         Control.leaderAddress = leaderAddress;
     }
@@ -232,6 +252,8 @@ public class Control extends Thread {
                 else{
                     addLamportTimeStamp();
                     Command userCommand = Command.valueOf(targetCommand);
+                    if (leaderAddress == null && clientCommands.contains(userCommand))
+                        sendSelection(lamportTimeStamp);
                     switch (userCommand) {
                         //In any case, if it returns true, it closes the connection.
                         //In any case, we should first check whether it is a valid message format
@@ -283,18 +305,12 @@ public class Control extends Thread {
 //                                System.out.println("Here");
 //                                return true;
 //                            }
-//                            if (leaderAddress == null) {
-//                                if (neighbors.size() > 0)
-//                                    sendSelection();
-//                                log.info("Send Selection to " + con.getRemoteId());
-//                            }
-//                            else
-//                            {
-//                                String decideMsg = Command.createDecide(leaderAddress,accpetedID.getLamportTimeStamp(),accpetedID.getServerID());
-//                                con.writeMsg(decideMsg);
-//                                log.info("Sending Decide to " + con.getRemoteId());
-//                            }
-//                            sendSelection();
+                            if (leaderAddress != null) {
+                                String decideMsg = Command.createDecide(leaderAddress);
+                                con.writeMsg(decideMsg);
+                                log.info("Sending Decide to " + con.getRemoteId());
+                            }
+
                             return auth.getResponse();
                             
                         case AUTHENTICATION_SUCCESS:
@@ -328,10 +344,10 @@ public class Control extends Thread {
 //                                if (con.getRemoteId().equals("10.0.0.42 5000")){
 //                                    return true;
 //                                }
-                                log.info(neighbors.size());
-                                log.info(neighborInfo.size());
-                                if (neighbors.size() == (neighborInfo.size() + 1))
-                                    sendSelection(Integer.MAX_VALUE);
+//                                log.info(neighbors.size());
+//                                log.info(neighborInfo.size());
+//                                if (neighbors.size() == (neighborInfo.size() + 1))
+//                                    sendSelection(Integer.MAX_VALUE);
                                 return false;
                             }
                             return true;
@@ -609,7 +625,7 @@ public class Control extends Thread {
         return value;
     }
 
-    public synchronized void setAccpetedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+    public synchronized void setAcceptedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
     public synchronized void setProposalID(UniqueID ID) {proposalID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
@@ -632,7 +648,10 @@ public class Control extends Thread {
         log.info("PromisedID Here " + promisedID.getServerID());
     }
 
-    public synchronized void setAccpetedValue(String value) {accpetedValue = value;leaderAddress = value;}
+    public synchronized void setAcceptedValue(String value) {
+        accpetedValue = value;
+        setLeaderAddress(value);
+    }
 
     public final void setTerm(boolean t) {
         term = t;

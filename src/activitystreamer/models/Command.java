@@ -304,11 +304,9 @@ public enum Command {
     
 
     // added in the evening of 04-28
-    public static String createDecide(String value, int timeStamp,String serverID){
+    public static String createDecide(String value){
         JSONObject obj = new JSONObject();
         obj.put("command", DECIDE.toString());
-        obj.put("lamportTimeStamp", timeStamp);
-        obj.put("serverID", serverID);
         obj.put("value", value);
         return obj.toJSONString();
     }
