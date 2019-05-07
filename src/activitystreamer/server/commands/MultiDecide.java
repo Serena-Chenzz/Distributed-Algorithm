@@ -41,10 +41,6 @@ public class MultiDecide {
             Control.slavePerformAction(value, index);
             //Remove from UnChosenLogs
             Control.removeFromUnchosenLogs();
-            //Increase the FirstUnchosenLogIndex
-            int firstUnchosenLogIndex = Control.getFirstUnchosenIndex();
-            firstUnchosenLogIndex++;
-            Control.setFirstUnchosenIndex(firstUnchosenLogIndex);
 
             closeConnection = false;
 

@@ -39,9 +39,6 @@ public class MultiAccepted {
                     //Send MultiDecide(index)
                     String decideMsg = Command.createMultiDecide(index, firstMsg);
                     Control.getInstance().broadcast(decideMsg);
-                    //Add on the firstUnchosenIndex
-                    firstUnchosenLogIndex++;
-                    Control.setFirstUnchosenIndex(firstUnchosenLogIndex);
                     //Get the replyConn
                     Connection replyConn = Control.getConFromUnchosenLogs();
                     //Remove the index from the list

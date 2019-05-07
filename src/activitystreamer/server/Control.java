@@ -226,7 +226,7 @@ public class Control extends Thread {
             pstmt.executeUpdate();
             log.info("Adding the Log into the database");
             myLargestDBIndex++;
-
+            firstUnchosenIndex++;
             sqlLogConnection.close();
 
         }catch (SQLException e){

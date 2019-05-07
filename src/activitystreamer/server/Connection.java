@@ -21,7 +21,7 @@ import activitystreamer.util.Settings;
 public class Connection extends Thread {
 
     private static final Logger log = LogManager.getLogger();
-    private static final long DISCONNECTION_TIME_LIMIT = 60000;  //60000 milliseconds
+    //private static final long DISCONNECTION_TIME_LIMIT = 1000;  //1000 milliseconds
     private DataInputStream in;
     private DataOutputStream out;
     private BufferedReader inreader;
@@ -101,7 +101,6 @@ public class Connection extends Thread {
                 in.close();
                 socket.close();
             } catch (IOException e) {
-                // already closed?
                 log.error("received exception closing the connection " + Settings.socketAddress(socket) + ": " + e);
             }
         }
@@ -113,44 +112,17 @@ public class Connection extends Thread {
             try {
                 //If Control.process() returns true, then while loop finishes
                 while (!term && (data = inreader.readLine()) != null) {
-                    //reset the starting time
-                    this.timerStart = 0;
                     term = Control.getInstance().process(this, data);               
                 }
-//                if (getRemoteId().equals("10.0.0.42 5000") || getRemoteId().equals("10.0.0.42 3000")){
-//                    log.debug("Sleep");
-//                    try {
-//                        Thread.sleep(120000);
-//                        log.debug("Thread awake:" + getRemoteId());
-//                        term = false;
-//                        while (!term && (data = inreader.readLine()) != null) {
-//                            //reset the starting time
-//                            this.timerStart = 0;
-//                            term = Control.getInstance().process(this, data);               
-//                        }
-//                    } catch (InterruptedException ex) {
-//                        java.util.logging.Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-//                    } 
-//                }
                 Control.getInstance().connectionClosed(this);
                 closeCon();
             }
             catch (SocketException e){
+                log.debug("socketException"+e.getMessage());
                 if (term){
                     open=false;
                 }
-                //log.error("connection error: " + e.toString());
-                //Start the timer
-                if (this.timerStart == 0){
-                    this.timerStart = System.currentTimeMillis();
-                }
-                else{
-                    long timerEnd = System.currentTimeMillis();
-                    if ((timerEnd - this.timerStart) > DISCONNECTION_TIME_LIMIT){
-                        //close the connection, regard the server is crashed
-                        open = false;
-                    }
-                }
+
                 if (remoteId.equals(Control.getInstance().getLeaderAddress()))
                 {
 
@@ -166,10 +138,12 @@ public class Connection extends Thread {
                     Control.getInstance().clearAcceptor();
                     Control.setLeaderHasBeenDecided(false);
                     //Check if this proposer has the largest Id in DB
-                    String askDBIndex = Command.createAskDBIndex();
-                    Control.getInstance().broadcast(askDBIndex);
-                    //Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
-                    Control.cleanUnChosenLogs();
+                    //String askDBIndex = Command.createAskDBIndex();
+                    //Control.getInstance().broadcast(askDBIndex);
+                    Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    //Control.cleanUnChosenLogs();
+
+                    open = false;
                 }
             }
             

@@ -49,6 +49,7 @@ public class MissingLogInfo {
 
             if(Control.getMissingAckCounter() >= length * N){
                 writeIntoDB(startIndex, endIndex);
+
             }
 
         }catch (ParseException e) {
@@ -66,9 +67,9 @@ public class MissingLogInfo {
         for(int index = startIndex; index<=endIndex; index++){
             HashMap<String, Integer> sCounter = findMissingLog.get(index);
             String majorValue = "";
-            for(Object string: sCounter.keySet()){
+            for(String string: sCounter.keySet()){
                 if(sCounter.get(string) > N/2){
-                    majorValue = string.toString();
+                    majorValue = string;
                     break;
                 }
             }
