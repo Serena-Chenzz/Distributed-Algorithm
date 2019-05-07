@@ -29,18 +29,18 @@ public class Logout {
             String username = message.get("username").toString();
             String secret = message.get("secret").toString();
 
-            sqlConnection = DriverManager.getConnection(sqlUrl);
-            String sqlUpdate = "UPDATE User SET LoggedInOrNot = 0 WHERE UserName = ? AND UserPassword = ?;";
-            PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
-            pstmt.setString(1, username);
-            pstmt.setString(2, secret);
-            // update
-            pstmt.executeUpdate();
-            sqlConnection.close();
+//            sqlConnection = DriverManager.getConnection(sqlUrl);
+//            String sqlUpdate = "UPDATE User SET LoggedInOrNot = 0 WHERE UserName = ? AND UserPassword = ?;";
+//            PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
+//            pstmt.setString(1, username);
+//            pstmt.setString(2, secret);
+//            // update
+//            pstmt.executeUpdate();
+//            sqlConnection.close();
         }
-        catch (SQLException e){
-            log.debug(e);
-        }
+//        catch (SQLException e){
+//            log.debug(e);
+//        }
         catch (ParseException e) {
             log.debug(e);
         }

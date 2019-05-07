@@ -27,13 +27,13 @@ public class MultiAccepted {
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-
-            int index = (int)message.get("index");
+            long indexLong = (long)message.get("index");
+            int index = (int)indexLong;
             // Add the index into the counter
             Control.addIntoAcceptedCounter(index);
 
             int firstUnchosenLogIndex = Control.getFirstUnchosenIndex();
-            if(index == firstUnchosenLogIndex+1){
+            if(index == firstUnchosenLogIndex){
                 while(Control.checkIfMeetMajority(index)){
                     String firstMsg = Control.getLogFromUnchosenLogs();
                     //Send MultiDecide(index)
@@ -46,9 +46,11 @@ public class MultiAccepted {
                     Connection replyConn = Control.getConFromUnchosenLogs();
                     //Remove the index from the list
                     Control.removeFromUnchosenLogs();
-                    index++;
+                    //Add the message into the log DB
+                    Control.writeIntoLogDB(index,firstMsg);
                     //Operate this message
-                    Control.leaderPerformAction(firstMsg,replyConn);
+                    Control.leaderPerformAction(firstMsg,replyConn,index);
+                    index++;
                 }
             }
         }catch (ParseException e) {

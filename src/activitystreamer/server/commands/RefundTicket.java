@@ -43,10 +43,11 @@ public class RefundTicket {
                 refundTime = message.get("refundTime").toString();
             }
             else if (flag == 2){
-                username = ((JSONObject)message.get("message")).get("username").toString();
-                trainLongId = (long)(((JSONObject)message.get("message")).get("trainNum"));
+                JSONObject relayMsg = (JSONObject) parser.parse(message.get("message").toString());
+                username = relayMsg.get("username").toString();
+                trainLongId = (long)(relayMsg.get("trainNum"));
                 trainId = (int) trainLongId;
-                refundTime = ((JSONObject)message.get("message")).get("refundTime").toString();
+                refundTime = relayMsg.get("refundTime").toString();
             }
 
 
@@ -89,7 +90,7 @@ public class RefundTicket {
                 closeConnection = false;
             }
             else if(flag == 2){
-                String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                String clientConnection = message.get("clientConnection").toString();
                 String relayMsg = Command.createRelayMsg(clientConnection,refundSuccess);
                 conn.writeMsg(relayMsg);
                 log.debug(relayMsg);

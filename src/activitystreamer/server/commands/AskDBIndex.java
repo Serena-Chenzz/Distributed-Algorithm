@@ -24,6 +24,7 @@ public class AskDBIndex {
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private static final String sqlLogUrl = Settings.getSqlLogUrl();
+    private static int myMaxDBIndex = 0;
 
     public AskDBIndex(String msg, Connection con, int flag){
         // flag - 1: broadcasted Ask, -2: ask for leader's index
@@ -36,21 +37,28 @@ public class AskDBIndex {
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
 
-            int maxId = 0;
+            int maxId = -1;
 
             while(result.next()){
                 maxId = result.getInt("MAX");
             }
 
-            String replyMsg = "";
+            String replyMsg;
             if(flag == 1){
                 replyMsg = Command.createReplyDBIndex(maxId);
+                con.writeMsg(replyMsg);
+                log.info(replyMsg);
             }
             else if(flag == 2){
                 replyMsg = Command.createReplyLeaderDBIndex(maxId);
+                con.writeMsg(replyMsg);
+                log.info(replyMsg);
             }
-            con.writeMsg(replyMsg);
-            log.info(replyMsg);
+            else if(flag == 3){
+                myMaxDBIndex = maxId;
+                log.info("the max id in the current db is: " + maxId);
+            }
+
         }
         catch (SQLException e){
             log.debug(e);
@@ -59,5 +67,9 @@ public class AskDBIndex {
 
     public boolean getCloseCon() {
         return closeConnection;
+    }
+
+    public int getMyLargestDBIndex(){
+        return myMaxDBIndex;
     }
 }

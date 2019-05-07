@@ -18,9 +18,12 @@ public class Settings {
 	private static int activityInterval = 5000; // milliseconds
 	private static String secret = null;
 	private static String username = "anonymous";
-	private static String sqlUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
-	private static String sqlLogUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/log.db";
+	private static String sqlUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest2.db";
+	private static String sqlLogUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/log2.db";
+    private static boolean initiateElection = false;
 
+    public static void setInitiateElection(String flag){if(flag.equals("true")){initiateElection = true;}}
+	public static boolean getInitiateElection(){return initiateElection;}
 	public static int getLocalPort() {
 		return localPort;
 	}

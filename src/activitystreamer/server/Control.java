@@ -60,6 +60,7 @@ public class Control extends Thread {
     //Corresponding Connections
     private static LinkedList<Connection> unChosenConnection;
     private static int firstUnchosenIndex;
+    private static boolean leaderHasBeenDecided;
 
     private static final HashSet<Command> clientCommands = new HashSet<Command>() {{
         add(Command.LOGIN);
@@ -83,16 +84,12 @@ public class Control extends Thread {
         add(Command.PURCHASE_SUCCESS);
     }};
     public static void setLeaderAddress(String leaderAddress) { Control.leaderAddress = leaderAddress; }
-
+    public String getLeaderAddress() { return leaderAddress; }
 
     private static LinkedList<Integer> DBIndexList;
     private static int myLargestDBIndex;
 
     private static int getMyLargestDBIndex(){return myLargestDBIndex;}
-
-
-    public String getLeaderAddress() { return leaderAddress; }
-
     public synchronized String getproposedValue(){ return proposedValue; }
     public synchronized void setProposedValue(String value){ proposedValue = value;}
     public static int getMissingAckCounter(){ return missingAckCounter; }
@@ -151,6 +148,7 @@ public class Control extends Thread {
     }
 
     public synchronized static void appendUnChosenLogs(String s, Connection con){
+        log.info("Appending UnchosenLog: " + s);
         unChosenLogs.add(s);
         unChosenConnection.add(con);
     }
@@ -195,7 +193,7 @@ public class Control extends Thread {
 
     public static synchronized boolean checkIfMeetMajority(int index){
         if(acceptedCounter.containsKey(index)){
-            int count = acceptedCounter.get(index);
+            int count = acceptedCounter.get(index)+1;
             int N = getInstance().getNeighbors().size()+1;
             if(count > N/2) {return true;}
         }
@@ -236,27 +234,31 @@ public class Control extends Thread {
         }
     }
 
-    public static synchronized void slavePerformAction(String msg){
+    public static synchronized void slavePerformAction(String msg, int index){
         //Three main actions: Register, BuyTicket, RefundTicket
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
+            Command slaveCommand;
 
             if(message.get("command").toString().equals("RELAY_MESSAGE")){
-                message = (JSONObject) message.get("message");
+                String relayMessage = message.get("message").toString();
+                message= (JSONObject)parser.parse(relayMessage);
+                slaveCommand = Command.valueOf(message.get("command").toString());
             }
-
-            Command slaveCommand = Command.valueOf(message.get("command").toString());
+            else{
+                slaveCommand = Command.valueOf(message.get("command").toString());
+            }
 
             switch(slaveCommand){
                 case REGISTER:
-                    Register rg = new Register(message.toJSONString(), null, 3);
+                    Register rg = new Register(message.toJSONString(), null, 3, index);
                     return;
                 case BUY_TICKET:
                     BuyTicket bt = new BuyTicket(message.toJSONString(), null, 3);
                     return;
                 case REFUND_TICKET:
-                    BuyTicket rt = new BuyTicket(message.toJSONString(), null, 3);
+                    RefundTicket rt = new RefundTicket(message.toJSONString(), null, 3);
                     return;
             }
 
@@ -267,25 +269,27 @@ public class Control extends Thread {
 
     }
 
-    public static synchronized void leaderPerformAction(String msg, Connection con){
+    public static synchronized void leaderPerformAction(String msg, Connection con, int index){
         //Three main actions: Register, BuyTicket, RefundTicket
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
 
             if(message.get("command").toString().equals("RELAY_MESSAGE")){
-                message = (JSONObject) message.get("message");
-                Command relayCommand = Command.valueOf(message.get("command").toString());
+                String relayMessage = message.get("message").toString();
+                JSONObject relay = (JSONObject)parser.parse(relayMessage);
+
+                Command relayCommand = Command.valueOf(relay.get("command").toString());
 
                 switch(relayCommand){
                     case REGISTER:
-                        Register rg = new Register(message.toJSONString(), con, 2);
+                        Register rg = new Register(message.toJSONString(), con, 2, index);
                         return;
                     case BUY_TICKET:
                         BuyTicket bt = new BuyTicket(message.toJSONString(), con, 2);
                         return;
                     case REFUND_TICKET:
-                        BuyTicket rt = new BuyTicket(message.toJSONString(), con, 2);
+                        RefundTicket rt = new RefundTicket(message.toJSONString(), con, 2);
                         return;
                 }
             }
@@ -295,13 +299,13 @@ public class Control extends Thread {
 
                 switch(leaderCommand){
                     case REGISTER:
-                        Register rg = new Register(message.toJSONString(), con, 1);
+                        Register rg = new Register(message.toJSONString(), con, 1, index);
                         return;
                     case BUY_TICKET:
                         BuyTicket bt = new BuyTicket(message.toJSONString(), con, 1);
                         return;
                     case REFUND_TICKET:
-                        BuyTicket rt = new BuyTicket(message.toJSONString(), con, 1);
+                        RefundTicket rt = new RefundTicket(message.toJSONString(), con, 1);
                         return;
                 }
             }
@@ -341,6 +345,9 @@ public class Control extends Thread {
         findMissingLog = new HashMap<Integer,HashMap<String, Integer>>() ;
         acceptedCounter = new HashMap<Integer, Integer>();
     }
+
+    public synchronized static void setLeaderHasBeenDecided(boolean flag){leaderHasBeenDecided = flag;}
+    public synchronized static boolean getLeaderHasBeenDecided(){return leaderHasBeenDecided;}
     
     public synchronized static String getRemoteId(){
         return uniqueId;
@@ -380,7 +387,7 @@ public class Control extends Thread {
         acceptedCounter = new HashMap<Integer, Integer>();
         unChosenConnection = new LinkedList<Connection>();
         DBIndexList = new LinkedList<Integer>();
-        myLargestDBIndex = 0;
+        leaderHasBeenDecided = false;
 
         serverLoad = new Load();
         if(Settings.getLocalHostname().equals("localhost")) {
@@ -388,6 +395,11 @@ public class Control extends Thread {
         }else {
         	uniqueId = Settings.getLocalHostname() + " " + Settings.getLocalPort();
         }
+
+        //Also initiate myLargestDBIndex
+        AskDBIndex myAsk = new AskDBIndex("", null, 3);
+        myLargestDBIndex = myAsk.getMyLargestDBIndex();
+        firstUnchosenIndex = myLargestDBIndex+1;
 
         // start a listener
         try {
@@ -465,8 +477,9 @@ public class Control extends Thread {
                 else{
                     addLamportTimeStamp();
                     Command userCommand = Command.valueOf(targetCommand);
-                    if (leaderAddress == null && clientCommands.contains(userCommand))
-                        sendSelection(lamportTimeStamp);
+//                    if (leaderAddress == null && clientCommands.contains(userCommand)){
+//                        sendSelection(lamportTimeStamp);
+//                    }
                     switch (userCommand) {
                         //In any case, if it returns true, it closes the connection.
                         //In any case, we should first check whether it is a valid message format
@@ -555,10 +568,14 @@ public class Control extends Thread {
                                     }
                                 }
 
-
-                                // Ask for leader's DB index
-                                leader.writeMsg(Command.createAskLeaderDBIndex());
-
+                                boolean initiateElection = Settings.getInitiateElection();
+                                if(initiateElection){
+                                    sendSelection(lamportTimeStamp);
+                                }
+                                // Newly added server asks for leader's DB index
+                                if(leader!=null){
+                                    leader.writeMsg(Command.createAskLeaderDBIndex());
+                                }
                                 return false;
                             }
 
@@ -607,9 +624,10 @@ public class Control extends Thread {
                             else if (leader == null){
                                 appendUnChosenLogs(msg, con);
                                 int currIndex = firstUnchosenIndex + unChosenLogs.size() -1;
-                                broadcast(Command.createMultiAccept(currIndex, msg, firstUnchosenIndex));
-//                                Register reg = new Register(msg, con, 1);
-//                                return reg.getCloseCon();
+                                String acceptMsg = Command.createMultiAccept(currIndex, msg, firstUnchosenIndex);
+                                broadcast(acceptMsg);
+                                log.info("Broadcasting AcceptMsg: "+acceptMsg);
+                                return false;
                             }
                             else{
                                 String clientConnection = con.getSocket().getInetAddress() + ":" + con.getSocket().getPort();
@@ -625,11 +643,7 @@ public class Control extends Thread {
                             }
                             else{
                                 Login login = new Login(con, msg);
-                                // If login success, check if client need redirecting
-                                if(!login.getResponse()){
-                                    return serverLoad.checkRedirect(con);                                   
-                                }
-                                return true;
+                                return login.getResponse();
                             }
                         case LOGOUT:
                             if (!Command.checkValidCommandFormat1(userInput)){
@@ -685,8 +699,7 @@ public class Control extends Thread {
                                 appendUnChosenLogs(msg, con);
                                 int currIndex = firstUnchosenIndex + unChosenLogs.size() -1;
                                 broadcast(Command.createMultiAccept(currIndex, msg, firstUnchosenIndex));
-                                //BuyTicket buyTicket = new BuyTicket(msg, con);
-                                //return buyTicket.getCloseCon();
+                                return false;
                             }
                             else{
                                 String clientConnection = con.getSocket().getInetAddress() + ":" + con.getSocket().getPort();
@@ -705,6 +718,7 @@ public class Control extends Thread {
                                 String relayResponse = message.get("message").toString();
                                 Command responseCommand = Command.valueOf(message.get("command").toString());
                                 Connection clientConnection = getClient(message.get("clientConnection").toString());
+                                //Find out the client Connection
                                 clientConnection.writeMsg(relayResponse);
 
                                 if(responseCommand == Command.REGISTER_FAILED){
@@ -716,6 +730,7 @@ public class Control extends Thread {
                                 appendUnChosenLogs(msg, con);
                                 int currIndex = firstUnchosenIndex + unChosenLogs.size() -1;
                                 broadcast(Command.createMultiAccept(currIndex, msg, firstUnchosenIndex));
+                                return false;
                             }
 
                         case REFUND_TICKET:
@@ -728,11 +743,11 @@ public class Control extends Thread {
                                 appendUnChosenLogs(msg, con);
                                 int currIndex = firstUnchosenIndex + unChosenLogs.size() -1;
                                 broadcast(Command.createMultiAccept(currIndex, msg, firstUnchosenIndex));
-//                                RefundTicket refundTicket = new RefundTicket(msg, con);
-//                                return refundTicket.getCloseCon();
+                                return false;
                             }
                             else{
-                                leader.writeMsg(msg);
+                                String clientConnection = con.getSocket().getInetAddress() + ":" + con.getSocket().getPort();
+                                leader.writeMsg(Command.createRelayMsg(clientConnection, msg));
                                 return false;
                             }
                         case PROMISE:
@@ -915,7 +930,7 @@ public class Control extends Thread {
     }
 
     public synchronized Connection getClient(String clientConnection){
-        for(Connection client: connectionClients){
+        for(Connection client: connections.keySet()){
             if((client.getSocket().getInetAddress() + ":" + client.getSocket().getPort()).equals(clientConnection)){
                 return client;
             }
@@ -1012,18 +1027,14 @@ public class Control extends Thread {
     }
 
     // Define the leader connection as well
-    public synchronized void setAccpetedValue(String value) {
+    public synchronized void setAcceptedValue(String value) {
         accpetedValue = value;
         leaderAddress = value;
-        leader = null;
-        for (Connection nei : neighbors) {
-            String serverIp1 = nei.getSocket().getInetAddress().toString();
-            int serverPort = nei.getSocket().getPort();
-            if (value.equals(serverIp1 + " " + serverPort)) {
-                leader = nei;
-                break;
-            }
-        }
+    }
+
+    public synchronized static void setLeaderConnection(Connection con){
+        leader = con;
+        log.info("The leader connection has been set to: " + leaderAddress);
     }
 
     public final void setTerm(boolean t) {

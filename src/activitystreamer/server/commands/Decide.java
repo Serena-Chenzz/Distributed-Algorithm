@@ -43,6 +43,8 @@ public class Decide{ //extends Thread
             Decide.conn = con;
             //start();
             log.info("Learned from leader " + value);
+            Control.setLeaderHasBeenDecided(true);
+            Control.setLeaderConnection(con);
             Control.getInstance().clearAcceptor();
         }catch (ParseException e) {
             log.debug(e);

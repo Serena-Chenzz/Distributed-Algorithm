@@ -34,8 +34,10 @@ public class GetMissingLog {
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
             //Read in the username and secret
-            int startIndex = (int)message.get("startIndex");
-            int endIndex = (int)message.get("endIndex");
+            long startIndexLong = (long)message.get("startIndex");
+            long endIndexLong = (long)message.get("endIndex");
+            int startIndex = (int)startIndexLong;
+            int endIndex = (int) endIndexLong;
 
             String sqlQuery = "SELECT * FROM Log WHERE LogId >= "+ startIndex + " AND LogId <= "+endIndex+";";
             Statement stmt  = sqlConnection.createStatement();

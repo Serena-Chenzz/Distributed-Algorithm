@@ -46,10 +46,11 @@ public class BuyTicket {
                 purchaseTime = message.get("purchaseTime").toString();
             }
             else if(flag == 2){
-                username = ((JSONObject)message.get("message")).get("username").toString();
-                trainLongId = (long)(((JSONObject)message.get("message")).get("trainNum"));
+                JSONObject relayMsg = (JSONObject) parser.parse(message.get("message").toString());
+                username = relayMsg.get("username").toString();
+                trainLongId = (long)(relayMsg.get("trainNum"));
                 trainId = (int) trainLongId;
-                purchaseTime = ((JSONObject)message.get("message")).get("purchaseTime").toString();
+                purchaseTime = relayMsg.get("purchaseTime").toString();
             }
 
             int userId = 0;
@@ -73,7 +74,7 @@ public class BuyTicket {
                     closeConnection = false;
                 }
                 else if(flag == 2){
-                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String clientConnection = message.get("clientConnection").toString();
                     String relayMsg = Command.createRelayMsg(clientConnection,purchaseFail);
                     conn.writeMsg(relayMsg);
                     log.debug(relayMsg);
@@ -115,7 +116,7 @@ public class BuyTicket {
                         closeConnection = false;
                     }
                     else if(flag == 2){
-                        String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                        String clientConnection = message.get("clientConnection").toString();
                         String relayMsg = Command.createRelayMsg(clientConnection,purchaseSuccess);
                         conn.writeMsg(relayMsg);
                         log.debug(relayMsg);
@@ -132,7 +133,7 @@ public class BuyTicket {
                         closeConnection = false;
                     }
                     else if(flag == 2){
-                        String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                        String clientConnection = message.get("clientConnection").toString();
                         String relayMsg = Command.createRelayMsg(clientConnection,purchaseFail);
                         conn.writeMsg(relayMsg);
                         log.debug(relayMsg);

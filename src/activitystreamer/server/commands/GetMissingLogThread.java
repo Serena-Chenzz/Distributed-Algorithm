@@ -68,7 +68,7 @@ public class GetMissingLogThread extends Thread{
             Control.writeIntoLogDB(index, majorValue);
 
             //Also, perform the correct action to the ticket selling db
-            Control.slavePerformAction(majorValue);
+            Control.slavePerformAction(majorValue, index);
         }
 
         terminate = true;

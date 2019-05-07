@@ -28,9 +28,11 @@ public class MultiAccept {
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            int leaderFirstUnchosenIndex = (int)message.get("firstUnchosenIndex");
+            long leaderFirstUnchosenIndexLong = (long)message.get("firstUnchosenIndex");
+            int leaderFirstUnchosenIndex = (int)leaderFirstUnchosenIndexLong;
             String value = message.get("value").toString();
-            int index = (int)message.get("index");
+            long indexLong = (long)message.get("index");
+            int index = (int) indexLong;
 
             //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();

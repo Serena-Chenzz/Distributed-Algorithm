@@ -50,15 +50,15 @@ public class Login {
                 JSONObject loginSuccess = Command.createLoginSuccess(username);
                 conn.writeMsg(loginSuccess.toJSONString());
                 closeConnection = false;
-                Control.setConnectionClients(conn);
+                //Control.setConnectionClients(conn);
 
-                //also change the login status for the user in the database
-                int userId = result.getInt("UserId");
-                String sqlUpdate = "UPDATE User SET LoggedInOrNot = 1 WHERE UserId = ? ;";
-                PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
-                pstmt.setInt(1, userId);
-                // update
-                pstmt.executeUpdate();
+//                //also change the login status for the user in the database
+//                int userId = result.getInt("UserId");
+//                String sqlUpdate = "UPDATE User SET LoggedInOrNot = 1 WHERE UserId = ? ;";
+//                PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
+//                pstmt.setInt(1, userId);
+//                // update
+//                pstmt.executeUpdate();
 
             }else { 
                 //If this username and secret are not correct, we send a login_failed

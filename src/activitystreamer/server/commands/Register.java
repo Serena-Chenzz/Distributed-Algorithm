@@ -27,7 +27,7 @@ public class Register {
     private static boolean closeConnection=false;
     private static final String sqlUrl =Settings.getSqlUrl();
     
-    public Register(String msg, Connection con, int flag) {
+    public Register(String msg, Connection con, int flag, int index) {
         //Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation
         Register.conn = con;
         
@@ -45,8 +45,9 @@ public class Register {
             }
             else{
                 //Read in the username and secret
-                username = ((JSONObject)message.get("message")).get("username").toString();
-                secret = ((JSONObject)message.get("message")).get("secret").toString();
+                JSONObject relayMsg = (JSONObject) parser.parse(message.get("message").toString());
+                username = relayMsg.get("username").toString();
+                secret = relayMsg.get("secret").toString();
             }
             //Check whether this user has been registered in the sqlite database
             String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
@@ -65,7 +66,7 @@ public class Register {
                     closeConnection = true;
                 }
                 else if(flag == 2){
-                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String clientConnection = message.get("clientConnection").toString();
                     String relayMsg = Command.createRelayMsg(clientConnection,registerFailed.toJSONString());
                     conn.writeMsg(relayMsg);
                     log.debug(relayMsg);
@@ -76,10 +77,11 @@ public class Register {
             //If this server has no connected servers, it will skip the broadcast part. And return the register success method
             else {
                 //Add this user to registerList
-                String sqlInsert = "INSERT INTO User(UserName, UserPassword) VALUES(?,?)";
+                String sqlInsert = "INSERT INTO User(UserId, UserName, UserPassword) VALUES(?,?,?)";
                 PreparedStatement pstmt = sqlConnection.prepareStatement(sqlInsert);
-                pstmt.setString(1, username);
-                pstmt.setString(2, secret);
+                pstmt.setInt(1, index);
+                pstmt.setString(2, username);
+                pstmt.setString(3, secret);
                 pstmt.executeUpdate();
                 log.info("Adding the user to the database");
 
@@ -90,7 +92,7 @@ public class Register {
                     closeConnection = false;
                 }
                 else if(flag == 2){
-                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String clientConnection = message.get("clientConnection").toString();
                     String relayMsg = Command.createRelayMsg(clientConnection,registerSuccess.toJSONString());
                     conn.writeMsg(relayMsg);
                     log.debug(relayMsg);

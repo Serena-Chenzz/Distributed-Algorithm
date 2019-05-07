@@ -164,6 +164,7 @@ public class Connection extends Thread {
                         }
                     }
                     Control.getInstance().clearAcceptor();
+                    Control.setLeaderHasBeenDecided(false);
                     //Check if this proposer has the largest Id in DB
                     String askDBIndex = Command.createAskDBIndex();
                     Control.getInstance().broadcast(askDBIndex);

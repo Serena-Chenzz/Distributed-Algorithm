@@ -38,6 +38,7 @@ public class Server {
 		options.addOption("lh",true,"local hostname");
 		options.addOption("a",true,"activity interval in milliseconds");
 		options.addOption("s",true,"secret for the server to use");
+		options.addOption("ifStartElection",true,"Decide on whether to start election or not");
 		
 		
 		// build the parser
@@ -96,6 +97,10 @@ public class Server {
 
 		if(cmd.hasOption("s")){
 			Settings.setSecret(cmd.getOptionValue("s"));
+		}
+
+		if(cmd.hasOption("ifStartElection")){
+			Settings.setInitiateElection(cmd.getOptionValue("ifStartElection"));
 		}
 		
 		log.info("starting server");

@@ -24,7 +24,8 @@ public class MultiDecide {
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            int index = (int)message.get("index");
+            long indexLong = (long)message.get("index");
+            int index = (int)indexLong;
             String value = message.get("value").toString();
 
             //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
@@ -37,9 +38,13 @@ public class MultiDecide {
             }
 
             Control.writeIntoLogDB(index, value);
-            Control.slavePerformAction(value);
+            Control.slavePerformAction(value, index);
             //Remove from UnChosenLogs
             Control.removeFromUnchosenLogs();
+            //Increase the FirstUnchosenLogIndex
+            int firstUnchosenLogIndex = Control.getFirstUnchosenIndex();
+            firstUnchosenLogIndex++;
+            Control.setFirstUnchosenIndex(firstUnchosenLogIndex);
 
             closeConnection = false;
 

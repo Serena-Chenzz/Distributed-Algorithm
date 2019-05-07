@@ -60,6 +60,8 @@ public class Accepted {
             log.debug("Sending Decide to " + connection.getRemoteId() + " " + decideMsg);
         }
         Control.getInstance().clearAcceptor();
+        Control.setLeaderHasBeenDecided(true);
+        Control.setLeaderConnection(null);
     }
 
     public boolean getCloseCon() {
