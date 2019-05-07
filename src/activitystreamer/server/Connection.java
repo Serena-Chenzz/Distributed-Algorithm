@@ -125,7 +125,7 @@ public class Connection extends Thread {
 
                 if (remoteId.equals(Control.getInstance().getLeaderAddress()))
                 {
-
+                    log.info("start election again.....");
                     for (Connection connection:Control.getInstance().getNeighbors())
                     {
                         if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
