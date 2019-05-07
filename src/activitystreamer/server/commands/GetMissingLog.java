@@ -48,7 +48,7 @@ public class GetMissingLog {
                 values.put(result.getInt("LogId"), result.getString("Value"));
             }
                 //If it does not have such value, return "null" string
-            con.writeMsg(Command.createMissingLogInfo(values));
+            con.writeMsg(Command.createMissingLogInfo(values, startIndex, endIndex));
 
         }
         catch (ParseException e) {

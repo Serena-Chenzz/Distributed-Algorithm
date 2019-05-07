@@ -334,10 +334,12 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createMissingLogInfo(JSONObject pairs){
+    public static String createMissingLogInfo(JSONObject pairs, int startIndex, int endIndex){
         JSONObject obj = new JSONObject();
         obj.put("command", MISSING_LOG_INFO.toString());
         obj.put("values", pairs);
+        obj.put("startIndex", startIndex);
+        obj.put("endIndex", endIndex);
         return obj.toJSONString();
     }
 
@@ -385,7 +387,7 @@ public enum Command {
 
     public static String createReplyLeaderDBIndex(int index){
         JSONObject obj = new JSONObject();
-        obj.put("command", REPLY_DB_INDEX.toString());
+        obj.put("command", REPLY_LEADER_DB_INDEX.toString());
         obj.put("index", index);
         return obj.toJSONString();
     }
@@ -545,7 +547,7 @@ public enum Command {
     }
 
     public static boolean checkValidMissingLogInfo(JSONObject obj){
-        if (obj.containsKey("command") && obj.containsKey("values")){
+        if (obj.containsKey("command") && obj.containsKey("values")&& obj.containsKey("startIndex") && obj.containsKey("endIndex")){
             return true;
         }
         return false;

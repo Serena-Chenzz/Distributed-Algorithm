@@ -843,6 +843,17 @@ public class Control extends Thread {
                                 return getMissingLog.getCloseCon();
                             }
 
+                        case MISSING_LOG_INFO:
+                            if (!Command.checkValidMissingLogInfo(userInput)){
+                                String invalidMissingLogInfo = Command.createInvalidMessage("Invalid Missing Log Info Message Format");
+                                con.writeMsg(invalidMissingLogInfo);
+                                return true;
+                            }
+                            else{
+                                MissingLogInfo missingLogInfo = new MissingLogInfo(msg,con);
+                                return missingLogInfo.getCloseCon();
+                            }
+
                         case ASK_DB_INDEX:
                             if (!Command.checkValidAskDBIndex(userInput)){
                                 String invalidAskDBIndexMsg= Command.createInvalidMessage("Invalid Ask DB Index Message Format");
@@ -887,10 +898,13 @@ public class Control extends Thread {
                                 long addIndexLong = (long)message.get("index");
                                 int leaderIndex = (int)addIndexLong;
 
-                                //Start the GetMissingLog Thread..
-                                Thread getMissingLog = new GetMissingLogThread(myLargestDBIndex, leaderIndex-1);
-                                getMissingLog.start();
-                                getMissingLog.join();
+                                if(myLargestDBIndex < leaderIndex){
+                                    //Start the GetMissingLog Thread..
+                                    log.info("Start Broadcasting Asking Missing Log Msg...");
+                                    String getMissingLog = Command.createGetMissingLog(myLargestDBIndex+1, leaderIndex);
+                                    Control.getInstance().broadcast(getMissingLog);
+                                }
+                                return false;
                             }
 
                         case INVALID_MESSAGE:
@@ -918,9 +932,9 @@ public class Control extends Thread {
             con.writeMsg(invalidParseMsg);
             log.error("msg: " + msg + " has error: " + e);
         }
-        catch (InterruptedException e){
-            log.debug(e);
-        }
+//        catch (InterruptedException e){
+//            log.debug(e);
+//        }
         return true;
     }
     

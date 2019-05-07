@@ -37,6 +37,7 @@ public class GetMissingLogThread extends Thread{
     public void run(){
         String getMissingLog = Command.createGetMissingLog(startIndex, endIndex);
         Control.getInstance().broadcast(getMissingLog);
+        log.info("Broadcasting: " + getMissingLog);
         try {
         while(!terminate){
             Thread.sleep(500);

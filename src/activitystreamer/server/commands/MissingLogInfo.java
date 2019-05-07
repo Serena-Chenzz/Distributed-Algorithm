@@ -1,6 +1,7 @@
 package activitystreamer.server.commands;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,24 +32,53 @@ public class MissingLogInfo {
         try{
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            JSONObject values = (JSONObject) message.get("values");
+            JSONObject values = (JSONObject) parser.parse(message.get("values").toString());
+            long startIndexLong = (long)message.get("startIndex");
+            long endIndexLong = (long)message.get("endIndex");
+            int startIndex = (int)startIndexLong;
+            int endIndex = (int) endIndexLong;
 
             for(Object index: values.keySet()){
-                Control.recordMissingLog((int)index, values.get(index).toString());
+                String indexString = index.toString();
+                int indexInt = Integer.parseInt(indexString);
+                Control.recordMissingLog(indexInt, values.get(index).toString());
             }
 
             int length = values.size();
             int N = Control.getInstance().getNeighbors().size();
 
             if(Control.getMissingAckCounter() >= length * N){
-                // Call the GetMissingLogThread to write the contents into the db.
-                GetMissingLogThread.writeIntoDB();
+                writeIntoDB(startIndex, endIndex);
             }
 
         }catch (ParseException e) {
             log.debug(e);
         }
 
+    }
+    public boolean getCloseCon() {
+        return closeConnection;
+    }
+
+    public void writeIntoDB(int startIndex, int endIndex){
+        HashMap<Integer, HashMap<String, Integer>> findMissingLog = Control.getFindMissingLog();
+        int N = Control.getInstance().getNeighbors().size()+1;
+        for(int index = startIndex; index<=endIndex; index++){
+            HashMap<String, Integer> sCounter = findMissingLog.get(index);
+            String majorValue = "";
+            for(Object string: sCounter.keySet()){
+                if(sCounter.get(string) > N/2){
+                    majorValue = string.toString();
+                    break;
+                }
+            }
+
+            //Write into Log DB
+            Control.writeIntoLogDB(index, majorValue);
+
+            //Also, perform the correct action to the ticket selling db
+            Control.slavePerformAction(majorValue, index);
+        }
     }
 
 }

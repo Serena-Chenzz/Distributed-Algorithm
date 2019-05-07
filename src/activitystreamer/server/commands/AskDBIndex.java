@@ -37,7 +37,7 @@ public class AskDBIndex {
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
 
-            int maxId = -1;
+            int maxId = 0;
 
             while(result.next()){
                 maxId = result.getInt("MAX");
