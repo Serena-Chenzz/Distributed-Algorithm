@@ -31,10 +31,10 @@ public class MultiDecide {
             //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();
             if(myFirstUnchosenIndex < index){
-                //Run the getMissingLogThread
-                Thread getMissingLog = new GetMissingLogThread(myFirstUnchosenIndex, index-1);
-                getMissingLog.start();
-                getMissingLog.join();
+                //Start the GetMissingLog..
+                log.info("Start Broadcasting Asking Missing Log Msg...");
+                String getMissingLog = Command.createGetMissingLog(myFirstUnchosenIndex, index);
+                Control.getInstance().broadcast(getMissingLog);
             }
 
             Control.writeIntoLogDB(index, value);
@@ -49,8 +49,6 @@ public class MultiDecide {
             closeConnection = false;
 
         }catch (ParseException e) {
-            log.debug(e);
-        }catch (InterruptedException e){
             log.debug(e);
         }
     }

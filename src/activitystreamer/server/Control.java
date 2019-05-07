@@ -899,7 +899,7 @@ public class Control extends Thread {
                                 int leaderIndex = (int)addIndexLong;
 
                                 if(myLargestDBIndex < leaderIndex){
-                                    //Start the GetMissingLog Thread..
+                                    //Start the GetMissingLog..
                                     log.info("Start Broadcasting Asking Missing Log Msg...");
                                     String getMissingLog = Command.createGetMissingLog(myLargestDBIndex+1, leaderIndex);
                                     Control.getInstance().broadcast(getMissingLog);
