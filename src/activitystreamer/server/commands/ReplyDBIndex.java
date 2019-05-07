@@ -33,8 +33,10 @@ public class ReplyDBIndex {
 
             if(Control.checkDBIndexListSize()){
                 if(Control.checkDBIndexList()){
-                    //Invoke Proposing....
-                    Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    if (Control.getInstance().getNeighbors().size() > 0) {
+                        log.info("Now making new selection.");
+                        Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    }
                 }
                 Control.cleanDBIndexList();
             }

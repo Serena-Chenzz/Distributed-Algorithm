@@ -138,13 +138,13 @@ public class Connection extends Thread {
                     Control.getInstance().clearAcceptor();
                     Control.setLeaderHasBeenDecided(false);
                     //Check if this proposer has the largest Id in DB
-                    //String askDBIndex = Command.createAskDBIndex();
-                    //Control.getInstance().broadcast(askDBIndex);
-                    if (Control.getInstance().getNeighbors().size() > 0) {
-                        log.info("Now making new selection.");
-                        Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
-                    }
-                    //Control.cleanUnChosenLogs();
+                    String askDBIndex = Command.createAskDBIndex();
+                    Control.getInstance().broadcast(askDBIndex);
+//                    if (Control.getInstance().getNeighbors().size() > 0) {
+//                        log.info("Now making new selection.");
+//                        Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+//                    }
+                    Control.cleanUnChosenLogs();
 
                     open = false;
                 }
