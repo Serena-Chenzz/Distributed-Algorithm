@@ -569,7 +569,7 @@ public class Control extends Thread {
                                 }
 
                                 boolean initiateElection = Settings.getInitiateElection();
-                                if(initiateElection){
+                                if(initiateElection && (neighborInfo.size() + 1) == neighbors.size()){
                                     sendSelection(lamportTimeStamp);
                                 }
                                 // Newly added server asks for leader's DB index

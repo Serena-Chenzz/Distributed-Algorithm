@@ -125,7 +125,7 @@ public class Connection extends Thread {
 
                 if (remoteId.equals(Control.getInstance().getLeaderAddress()))
                 {
-                    log.info("start election again.....");
+                    log.info("Leader gets crushed.");
                     for (Connection connection:Control.getInstance().getNeighbors())
                     {
                         if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
@@ -140,7 +140,10 @@ public class Connection extends Thread {
                     //Check if this proposer has the largest Id in DB
                     //String askDBIndex = Command.createAskDBIndex();
                     //Control.getInstance().broadcast(askDBIndex);
-                    Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    if (Control.getInstance().getNeighbors().size() > 0) {
+                        log.info("Now making new selection.");
+                        Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    }
                     //Control.cleanUnChosenLogs();
 
                     open = false;
