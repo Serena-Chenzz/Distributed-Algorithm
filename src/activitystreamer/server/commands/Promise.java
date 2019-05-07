@@ -48,9 +48,9 @@ public class Promise {
                 {
                     String largestAcceptedValue = Control.getInstance().getAcceptedValueWithLargestProposalID(promisedID);
                     if (largestAcceptedValue == null)
-                        Control.getInstance().setAccpetedValue(Control.getInstance().getUniqueId());
+                        Control.getInstance().setAcceptedValue(Control.getInstance().getUniqueId());
                     else
-                        Control.getInstance().setAccpetedValue(largestAcceptedValue);
+                        Control.getInstance().setAcceptedValue(largestAcceptedValue);
                     sendAccept(proposalID,Control.getInstance().getAccpetedValue());
                     System.out.println("Proposer Accepted Value " + Control.getInstance().getAccpetedValue());
                 }

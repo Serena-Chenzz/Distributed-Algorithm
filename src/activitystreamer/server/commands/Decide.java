@@ -38,17 +38,11 @@ public class Decide{ //extends Thread
         try {
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
-            String serverID = message.get("serverID").toString();
             String value = message.get("value").toString();
-            UniqueID proposalID = new UniqueID(lamportTimeStamp, serverID);
-            Control.getInstance().setAccpetedID(proposalID);
-            Control.getInstance().setPromisedID(proposalID);
-            Control.getInstance().setAccpetedValue(value);
+            Control.getInstance().setAcceptedValue(value);
             Decide.conn = con;
             //start();
-            log.info("Learner Decided value " + value);
-            log.info("Learned from Proposal " + proposalID.getServerID() + " " + Integer.toString(proposalID.getLamportTimeStamp()));
+            log.info("Learned from leader " + value);
             Control.getInstance().clearAcceptor();
         }catch (ParseException e) {
             log.debug(e);

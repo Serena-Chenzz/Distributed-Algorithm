@@ -159,7 +159,7 @@ public class Connection extends Thread {
                         if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
                         {
                             Control.getInstance().getNeighbors().remove(connection);
-                            Control.getInstance().setAccpetedValue(null);
+                            Control.getInstance().setAcceptedValue(null);
                             break;
                         }
                     }

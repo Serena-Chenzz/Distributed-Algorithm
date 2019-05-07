@@ -49,6 +49,7 @@ public class Control extends Thread {
     private static int neighbors_num = -1;
 
     private static String leaderAddress;
+
     private static Connection leader = null;
     private static HashMap<Integer,HashMap<String, Integer>> findMissingLog;
     private static HashMap<Integer, Integer> acceptedCounter;
@@ -60,12 +61,35 @@ public class Control extends Thread {
     private static LinkedList<Connection> unChosenConnection;
     private static int firstUnchosenIndex;
 
+    private static final HashSet<Command> clientCommands = new HashSet<Command>() {{
+        add(Command.LOGIN);
+        add(Command.BUY_TICKET);
+        add(Command.PURCHASE_SUCCESS);
+        add(Command.INVALID_MESSAGE);
+        add(Command.LOGIN_SUCCESS);
+        add(Command.LOGIN_FAILED);
+        add(Command.LOGOUT);
+        add(Command.ACTIVITY_MESSAGE);
+        add(Command.ACTIVITY_BROADCAST);
+        add(Command.REFRESH_INFO);
+        add(Command.REFRESH_REQUEST);
+        add(Command.REGISTER);
+        add(Command.REGISTER_FAILED);
+        add(Command.REGISTER_SUCCESS);
+        add(Command.BUY_TICKET);
+        add(Command.REFUND_TICKET);
+        add(Command.REFUND_SUCCESS);
+        add(Command.PURCHASE_FAIL);
+        add(Command.PURCHASE_SUCCESS);
+    }};
+    public static void setLeaderAddress(String leaderAddress) { Control.leaderAddress = leaderAddress; }
+
+
     private static LinkedList<Integer> DBIndexList;
     private static int myLargestDBIndex;
 
     private static int getMyLargestDBIndex(){return myLargestDBIndex;}
 
-    public static void setLeaderAddress(String leaderAddress) { Control.leaderAddress = leaderAddress; }
 
     public String getLeaderAddress() { return leaderAddress; }
 
@@ -441,6 +465,8 @@ public class Control extends Thread {
                 else{
                     addLamportTimeStamp();
                     Command userCommand = Command.valueOf(targetCommand);
+                    if (leaderAddress == null && clientCommands.contains(userCommand))
+                        sendSelection(lamportTimeStamp);
                     switch (userCommand) {
                         //In any case, if it returns true, it closes the connection.
                         //In any case, we should first check whether it is a valid message format
@@ -492,18 +518,12 @@ public class Control extends Thread {
 //                                System.out.println("Here");
 //                                return true;
 //                            }
-//                            if (leaderAddress == null) {
-//                                if (neighbors.size() > 0)
-//                                    sendSelection();
-//                                log.info("Send Selection to " + con.getRemoteId());
-//                            }
-//                            else
-//                            {
-//                                String decideMsg = Command.createDecide(leaderAddress,accpetedID.getLamportTimeStamp(),accpetedID.getServerID());
-//                                con.writeMsg(decideMsg);
-//                                log.info("Sending Decide to " + con.getRemoteId());
-//                            }
-//                            sendSelection();
+                            if (leaderAddress != null) {
+                                String decideMsg = Command.createDecide(leaderAddress);
+                                con.writeMsg(decideMsg);
+                                log.info("Sending Decide to " + con.getRemoteId());
+                            }
+
                             return auth.getResponse();
                             
                         case AUTHENTICATION_SUCCESS:
@@ -535,8 +555,10 @@ public class Control extends Thread {
                                     }
                                 }
 
+
                                 // Ask for leader's DB index
                                 leader.writeMsg(Command.createAskLeaderDBIndex());
+
                                 return false;
                             }
 
@@ -966,7 +988,7 @@ public class Control extends Thread {
         return value;
     }
 
-    public synchronized void setAccpetedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+    public synchronized void setAcceptedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
     public synchronized void setProposalID(UniqueID ID) {proposalID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
@@ -991,12 +1013,13 @@ public class Control extends Thread {
 
     // Define the leader connection as well
     public synchronized void setAccpetedValue(String value) {
-        accpetedValue = value;leaderAddress = value;
+        accpetedValue = value;
+        leaderAddress = value;
         leader = null;
-        for(Connection nei: neighbors){
+        for (Connection nei : neighbors) {
             String serverIp1 = nei.getSocket().getInetAddress().toString();
             int serverPort = nei.getSocket().getPort();
-            if(value.equals(serverIp1+" " +serverPort)){
+            if (value.equals(serverIp1 + " " + serverPort)) {
                 leader = nei;
                 break;
             }
