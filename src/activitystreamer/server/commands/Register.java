@@ -27,7 +27,8 @@ public class Register {
     private static boolean closeConnection=false;
     private static final String sqlUrl =Settings.getSqlUrl();
     
-    public Register(String msg, Connection con) {
+    public Register(String msg, Connection con, int flag) {
+        //Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation
         Register.conn = con;
         
          try {
@@ -35,10 +36,18 @@ public class Register {
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            //Read in the username and secret
-            String username = message.get("username").toString();
-            String secret =  message.get("secret").toString();
-            
+            String username;
+            String secret;
+            if(flag ==1 || flag ==3){
+                //Read in the username and secret
+                username = message.get("username").toString();
+                secret =  message.get("secret").toString();
+            }
+            else{
+                //Read in the username and secret
+                username = ((JSONObject)message.get("message")).get("username").toString();
+                secret = ((JSONObject)message.get("message")).get("secret").toString();
+            }
             //Check whether this user has been registered in the sqlite database
             String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
             Statement stmt  = sqlConnection.createStatement();
@@ -49,10 +58,20 @@ public class Register {
                 //If this user has been registered, we directly send a register_failed
                 log.info("This username has already been registered. Please try another username");
                 JSONObject registerFailed = Command.createRegisterFailed(username);
-                conn.writeMsg(registerFailed.toJSONString());
-                log.debug(registerFailed.toJSONString());
-                //The the connetion will be closed
-                closeConnection = true;
+                if(flag == 1){
+                    conn.writeMsg(registerFailed.toJSONString());
+                    log.debug(registerFailed.toJSONString());
+                    //The the connetion will be closed
+                    closeConnection = true;
+                }
+                else if(flag == 2){
+                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String relayMsg = Command.createRelayMsg(clientConnection,registerFailed.toJSONString());
+                    conn.writeMsg(relayMsg);
+                    log.debug(relayMsg);
+                    closeConnection = false;
+                }
+
             }
             //If this server has no connected servers, it will skip the broadcast part. And return the register success method
             else {
@@ -65,10 +84,18 @@ public class Register {
                 log.info("Adding the user to the database");
 
                 JSONObject registerSuccess = Command.createRegisterSuccess(username);
-                conn.writeMsg(registerSuccess.toJSONString());
-                log.debug(registerSuccess.toJSONString());
-                //Adding user to list of users logged in
-                closeConnection = false;
+                if (flag == 1){
+                    conn.writeMsg(registerSuccess.toJSONString());
+                    log.debug(registerSuccess.toJSONString());
+                    closeConnection = false;
+                }
+                else if(flag == 2){
+                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String relayMsg = Command.createRelayMsg(clientConnection,registerSuccess.toJSONString());
+                    conn.writeMsg(relayMsg);
+                    log.debug(relayMsg);
+                    closeConnection = false;
+                }
             }
              sqlConnection.close();
 

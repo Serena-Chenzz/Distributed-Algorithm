@@ -25,7 +25,8 @@ public class BuyTicket {
     private static boolean closeConnection=false;
     private static final String sqlUrl = Settings.getSqlUrl();
 
-    public BuyTicket(String msg, Connection con){
+    public BuyTicket(String msg, Connection con, int flag){
+        //Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation
         conn = con;
         try{
 
@@ -33,10 +34,23 @@ public class BuyTicket {
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            String username = message.get("username").toString();
-            long trainLongId = (long)message.get("trainNum");
-            int trainId = (int) trainLongId;
-            String purchaseTime = message.get("purchaseTime").toString();
+            String username = "";
+            long trainLongId = 0;
+            int trainId= 0;
+            String purchaseTime = "";
+
+            if(flag == 1 || flag == 3){
+                username = message.get("username").toString();
+                trainLongId = (long)message.get("trainNum");
+                trainId = (int) trainLongId;
+                purchaseTime = message.get("purchaseTime").toString();
+            }
+            else if(flag == 2){
+                username = ((JSONObject)message.get("message")).get("username").toString();
+                trainLongId = (long)(((JSONObject)message.get("message")).get("trainNum"));
+                trainId = (int) trainLongId;
+                purchaseTime = ((JSONObject)message.get("message")).get("purchaseTime").toString();
+            }
 
             int userId = 0;
             String sqlUserQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
@@ -53,9 +67,19 @@ public class BuyTicket {
             if(checkResult.next()){
                 // Sending back Purchase_Fail Info. The user has already bought the ticket
                 String purchaseFail = Command.createPurchaseFail(trainId, username, purchaseTime);
-                conn.writeMsg(purchaseFail);
-                log.debug(purchaseFail);
-                closeConnection = false;
+                if(flag == 1){
+                    conn.writeMsg(purchaseFail);
+                    log.debug(purchaseFail);
+                    closeConnection = false;
+                }
+                else if(flag == 2){
+                    String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                    String relayMsg = Command.createRelayMsg(clientConnection,purchaseFail);
+                    conn.writeMsg(relayMsg);
+                    log.debug(relayMsg);
+                    closeConnection = false;
+                }
+
             }
 
             else{
@@ -85,16 +109,35 @@ public class BuyTicket {
 
                     // Sending back Purchase_Success Info
                     String purchaseSuccess = Command.createPurchaseSuccess(trainId, username, purchaseTime);
-                    conn.writeMsg(purchaseSuccess);
-                    log.debug(purchaseSuccess);
-                    closeConnection = false;
+                    if(flag == 1){
+                        conn.writeMsg(purchaseSuccess);
+                        log.debug(purchaseSuccess);
+                        closeConnection = false;
+                    }
+                    else if(flag == 2){
+                        String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                        String relayMsg = Command.createRelayMsg(clientConnection,purchaseSuccess);
+                        conn.writeMsg(relayMsg);
+                        log.debug(relayMsg);
+                        closeConnection = false;
+                    }
+
                 }
                 else{
                     // Sending back Purchase_Fail Info
                     String purchaseFail = Command.createPurchaseFail(trainId, username, purchaseTime);
-                    conn.writeMsg(purchaseFail);
-                    log.debug(purchaseFail);
-                    closeConnection = false;
+                    if(flag == 1){
+                        conn.writeMsg(purchaseFail);
+                        log.debug(purchaseFail);
+                        closeConnection = false;
+                    }
+                    else if(flag == 2){
+                        String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                        String relayMsg = Command.createRelayMsg(clientConnection,purchaseFail);
+                        conn.writeMsg(relayMsg);
+                        log.debug(relayMsg);
+                        closeConnection = false;
+                    }
                 }
             }
             sqlConnection.close();

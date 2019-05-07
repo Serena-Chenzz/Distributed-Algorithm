@@ -12,6 +12,7 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.util.logging.Level;
 
+import activitystreamer.models.Command;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -163,7 +164,11 @@ public class Connection extends Thread {
                         }
                     }
                     Control.getInstance().clearAcceptor();
-                    Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    //Check if this proposer has the largest Id in DB
+                    String askDBIndex = Command.createAskDBIndex();
+                    Control.getInstance().broadcast(askDBIndex);
+                    //Control.getInstance().sendSelection(Control.getInstance().getLamportTimeStamp());
+                    Control.cleanUnChosenLogs();
                 }
             }
             

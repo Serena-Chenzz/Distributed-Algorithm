@@ -23,17 +23,32 @@ public class RefundTicket {
     private static boolean closeConnection=false;
     private static final String sqlUrl =Settings.getSqlUrl();
 
-    public RefundTicket(String msg, Connection con){
+    public RefundTicket(String msg, Connection con, int flag){
         conn = con;
         try{
             sqlConnection = DriverManager.getConnection(sqlUrl);
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            String username = message.get("username").toString();
-            long trainLongId = (long) message.get("trainNum");
-            int trainId = (int) trainLongId;
-            String refundTime = message.get("refundTime").toString();
+            String username = "";
+            long trainLongId =0;
+            int trainId = 0;
+            String refundTime = "";
+
+
+            if(flag == 1 || flag == 3){
+                username = message.get("username").toString();
+                trainLongId = (long) message.get("trainNum");
+                trainId = (int) trainLongId;
+                refundTime = message.get("refundTime").toString();
+            }
+            else if (flag == 2){
+                username = ((JSONObject)message.get("message")).get("username").toString();
+                trainLongId = (long)(((JSONObject)message.get("message")).get("trainNum"));
+                trainId = (int) trainLongId;
+                refundTime = ((JSONObject)message.get("message")).get("refundTime").toString();
+            }
+
 
             int userId = 0;
             String sqlUserQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
@@ -68,9 +83,18 @@ public class RefundTicket {
 
             // Return Refund_Success Msg
             String refundSuccess = Command.createRefundSuccess(trainId, username, refundTime);
-            conn.writeMsg(refundSuccess);
-            log.debug(refundSuccess);
-            closeConnection = false;
+            if(flag == 1){
+                conn.writeMsg(refundSuccess);
+                log.debug(refundSuccess);
+                closeConnection = false;
+            }
+            else if(flag == 2){
+                String clientConnection = ((JSONObject)message.get("message")).get("clientConnection").toString();
+                String relayMsg = Command.createRelayMsg(clientConnection,refundSuccess);
+                conn.writeMsg(relayMsg);
+                log.debug(relayMsg);
+                closeConnection = false;
+            }
 
             sqlConnection.close();
         }

@@ -19,7 +19,7 @@ public class Settings {
 	private static String secret = null;
 	private static String username = "anonymous";
 	private static String sqlUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
-
+	private static String sqlLogUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/log.db";
 
 	public static int getLocalPort() {
 		return localPort;
@@ -38,6 +38,8 @@ public class Settings {
 	}
 
 	public static String getSqlUrl() {return sqlUrl;}
+
+	public static String getSqlLogUrl() {return sqlLogUrl;}
 
 	public static void setRemotePort(int remotePort) {
 		if(remotePort<0 || remotePort>65535){

@@ -15,9 +15,9 @@ public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
     ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE, DECIDE,
-
     PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS,REFRESH_REQUEST,
-    REFRESH_INFO,ABORT
+    REFRESH_INFO,ABORT, MULTI_ACCEPT, GET_MISSING_LOG, MISSING_LOG_INFO, MULTI_ACCEPTED, MULTI_DECIDE, RELAY_MESSAGE,
+    ASK_DB_INDEX, REPLY_DB_INDEX, ASK_LEADER_DB_INDEX, REPLY_LEADER_DB_INDEX
     ;
 
 
@@ -301,8 +301,6 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    
-
     // added in the evening of 04-28
     public static String createDecide(String value, int timeStamp,String serverID){
         JSONObject obj = new JSONObject();
@@ -321,8 +319,78 @@ public enum Command {
         return obj.toJSONString();
     }
 
+    public static String createMultiAccept(int index, String s, int firstUnchosenIndex){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_ACCEPT.toString());
+        obj.put("index", index);
+        obj.put("value", s);
+        obj.put("firstUnchosenIndex", firstUnchosenIndex);
+        return obj.toJSONString();
+    }
 
+    public static String createGetMissingLog(int startIndex, int endIndex){
+        JSONObject obj = new JSONObject();
+        obj.put("command", GET_MISSING_LOG.toString());
+        obj.put("startIndex", startIndex);
+        obj.put("endIndex", endIndex);
+        return obj.toJSONString();
+    }
 
+    public static String createMissingLogInfo(JSONObject pairs){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MISSING_LOG_INFO.toString());
+        obj.put("values", pairs);
+        return obj.toJSONString();
+    }
+
+    public static String createRelayMsg(String client, String msg){
+        JSONObject obj = new JSONObject();
+        obj.put("command", RELAY_MESSAGE.toString());
+        obj.put("clientConnection", client);
+        obj.put("message", msg);
+        return obj.toJSONString();
+    }
+
+    public static String createMultiAccepted(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_ACCEPTED.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
+
+    public static String createMultiDecide(int index, String msg){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_DECIDE.toString());
+        obj.put("index", index);
+        obj.put("value", msg);
+        return obj.toJSONString();
+    }
+
+    public static String createAskDBIndex(){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ASK_DB_INDEX.toString());
+        return obj.toJSONString();
+    }
+
+    public static String createAskLeaderDBIndex(){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ASK_LEADER_DB_INDEX.toString());
+        return obj.toJSONString();
+    }
+
+    public static String createReplyDBIndex(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REPLY_DB_INDEX.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
+
+    public static String createReplyLeaderDBIndex(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REPLY_DB_INDEX.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
 
     
     //The following methods are used to check if a command message is in a right format
@@ -464,6 +532,61 @@ public enum Command {
         return false;
     }
 
+    public static boolean checkValidMultiAccept(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")&& obj.containsKey("value")&& obj.containsKey("firstUnchosenIndex")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidGetMissingLog(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("startIndex") && obj.containsKey("endIndex")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMissingLogInfo(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("values")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRelayMessage(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("message") && obj.containsKey("clientConnection")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMultiAccepted(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMultiDecide(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")&& obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidAskDBIndex(JSONObject obj){
+        if (obj.containsKey("command")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidReplyDBIndex(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")){
+            return true;
+        }
+        return false;
+    }
 
 
 }
