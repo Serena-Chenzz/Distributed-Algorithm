@@ -142,6 +142,11 @@ public class Connection extends Thread {
                         log.info("Now making new selection.");
                         Control.getInstance().sendSelection(myLargestIndexInDB);
                     }
+                    else {
+                        Control.setLeaderAddress(Control.getInstance().getUniqueId());
+                        Control.setLeaderConnection(null);
+                    }
+
                     Control.cleanUnChosenLogs();
                 }
                 open = false;
