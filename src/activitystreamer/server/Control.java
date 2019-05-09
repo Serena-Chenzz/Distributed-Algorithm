@@ -89,7 +89,7 @@ public class Control extends Thread {
     private static LinkedList<Integer> DBIndexList;
     private static int myLargestDBIndex;
 
-    private static int getMyLargestDBIndex(){return myLargestDBIndex;}
+    public static int getMyLargestDBIndex(){return myLargestDBIndex;}
     public synchronized String getproposedValue(){ return proposedValue; }
     public synchronized void setProposedValue(String value){ proposedValue = value;}
     public static int getMissingAckCounter(){ return missingAckCounter; }
@@ -572,10 +572,6 @@ public class Control extends Thread {
                                 if(initiateElection && (neighborInfo.size() + 1) == neighbors.size()){
                                     sendSelection(lamportTimeStamp);
                                 }
-                                // Newly added server asks for leader's DB index
-                                if(leader!=null){
-                                    leader.writeMsg(Command.createAskLeaderDBIndex());
-                                }
                                 return false;
                             }
 
@@ -796,6 +792,10 @@ public class Control extends Thread {
                             }
                             else{
                                 Decide decide = new Decide(msg,con);
+                                // Other server asks for leader's DB index
+                                if(leader!=null){
+                                    leader.writeMsg(Command.createAskLeaderDBIndex());
+                                }
                                 return decide.getCloseCon();
                             }
 

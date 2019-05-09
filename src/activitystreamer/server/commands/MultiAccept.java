@@ -37,18 +37,18 @@ public class MultiAccept {
             //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();
             if(myFirstUnchosenIndex < leaderFirstUnchosenIndex){
-                //Start the GetMissingLog..
-                log.info("Start Broadcasting Asking Missing Log Msg...");
-                String getMissingLog = Command.createGetMissingLog(myFirstUnchosenIndex, leaderFirstUnchosenIndex-1);
-                Control.getInstance().broadcast(getMissingLog);
+                // Notify the user about the error
+                log.error("Please restart the system, the system is in an inconsistent state...");
+                System.exit(1);
             }
+            else{
+                //Append the msg to the UnChosenLogList
+                Control.appendUnChosenLogs(value,con);
 
-            //Append the msg to the UnChosenLogList
-            Control.appendUnChosenLogs(value,con);
-
-            //Return accepted msg
-            conn.writeMsg(Command.createMultiAccepted(index));
-            closeConnection = false;
+                //Return accepted msg
+                conn.writeMsg(Command.createMultiAccepted(index));
+                closeConnection = false;
+            }
 
         }catch (ParseException e) {
             log.debug(e);

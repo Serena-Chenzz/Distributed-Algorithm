@@ -31,18 +31,18 @@ public class MultiDecide {
             //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();
             if(myFirstUnchosenIndex < index){
-                //Start the GetMissingLog..
-                log.info("Start Broadcasting Asking Missing Log Msg...");
-                String getMissingLog = Command.createGetMissingLog(myFirstUnchosenIndex, index);
-                Control.getInstance().broadcast(getMissingLog);
+                // Notify the user about the error
+                log.error("Please restart the system, the system is in an inconsistent state...");
+                System.exit(1);
+            }
+            else{
+                Control.writeIntoLogDB(index, value);
+                Control.slavePerformAction(value, index);
+                //Remove from UnChosenLogs
+                Control.removeFromUnchosenLogs();
+                closeConnection = false;
             }
 
-            Control.writeIntoLogDB(index, value);
-            Control.slavePerformAction(value, index);
-            //Remove from UnChosenLogs
-            Control.removeFromUnchosenLogs();
-
-            closeConnection = false;
 
         }catch (ParseException e) {
             log.debug(e);
