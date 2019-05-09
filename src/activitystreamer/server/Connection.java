@@ -143,9 +143,8 @@ public class Connection extends Thread {
                         Control.getInstance().sendSelection(myLargestIndexInDB);
                     }
                     Control.cleanUnChosenLogs();
-
-                    open = false;
                 }
+                open = false;
             }
             
             catch (IOException e) {

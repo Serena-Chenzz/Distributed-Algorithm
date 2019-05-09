@@ -63,7 +63,7 @@ public class MissingLogInfo {
 
     public void writeIntoDB(int startIndex, int endIndex){
         HashMap<Integer, HashMap<String, Integer>> findMissingLog = Control.getFindMissingLog();
-        int N = Control.getInstance().getNeighbors().size()+1;
+        int N = Control.getInstance().getNeighbors().size();
         for(int index = startIndex; index<=endIndex; index++){
             HashMap<String, Integer> sCounter = findMissingLog.get(index);
             String majorValue = "";
