@@ -36,25 +36,22 @@ public class Control extends Thread {
     private static Listener listener;
     private InetAddress ip;
     private static HashMap<Connection, String> activatorMonitor = new HashMap<Connection, String>();
-    private static UniqueID accpetedID;
+    // Some variables for Basic-Paxos Algorithm
+    private static UniqueID acceptedID;
     private static UniqueID promisedID;
-    private static String accpetedValue;
-    private static String serverID = UUID.randomUUID().toString();
+    private static String acceptedValue;
     private static int lamportTimeStamp = 0;
-    // added in the evening of 04-28
-    private static UniqueID proposalID = new UniqueID(0,serverID);
+    private static UniqueID proposalID;
     private static HashMap<UniqueID, String> promiseSet = new HashMap<>();
-    private static int ackNumber = 0;
+    private static int ackNumber = 0; // counter for ACKs received by far
     private static String proposedValue;
-    private static int neighbors_num = -1;
-
     private static String leaderAddress;
-
     private static Connection leader = null;
+
+    // Some variables for Multi-Paxos Algorithm
     private static HashMap<Integer,HashMap<String, Integer>> findMissingLog;
     private static HashMap<Integer, Integer> acceptedCounter;
     private static int missingAckCounter = 0;
-
     //Unchosen Log List
     private static LinkedList<String> unChosenLogs;
     //Corresponding Connections
@@ -62,27 +59,6 @@ public class Control extends Thread {
     private static int firstUnchosenIndex;
     private static boolean leaderHasBeenDecided;
 
-    private static final HashSet<Command> clientCommands = new HashSet<Command>() {{
-        add(Command.LOGIN);
-        add(Command.BUY_TICKET);
-        add(Command.PURCHASE_SUCCESS);
-        add(Command.INVALID_MESSAGE);
-        add(Command.LOGIN_SUCCESS);
-        add(Command.LOGIN_FAILED);
-        add(Command.LOGOUT);
-        add(Command.ACTIVITY_MESSAGE);
-        add(Command.ACTIVITY_BROADCAST);
-        add(Command.REFRESH_INFO);
-        add(Command.REFRESH_REQUEST);
-        add(Command.REGISTER);
-        add(Command.REGISTER_FAILED);
-        add(Command.REGISTER_SUCCESS);
-        add(Command.BUY_TICKET);
-        add(Command.REFUND_TICKET);
-        add(Command.REFUND_SUCCESS);
-        add(Command.PURCHASE_FAIL);
-        add(Command.PURCHASE_SUCCESS);
-    }};
     public static void setLeaderAddress(String leaderAddress) { Control.leaderAddress = leaderAddress; }
     public String getLeaderAddress() { return leaderAddress; }
 
@@ -99,16 +75,14 @@ public class Control extends Thread {
 
     public synchronized void addAckNumber() {ackNumber += 1;}
 
-    private static int acceptedNum = 0; // need to be initiate whenver start new proposal
-
     protected static Control control = null;
     protected static Load serverLoad;
 
-    public synchronized UniqueID getAccpetedID() {return accpetedID;}
+    public synchronized UniqueID getacceptedID() {return acceptedID;}
 
     public synchronized UniqueID getPromisedID() {return promisedID;}
 
-    public synchronized String getAccpetedValue() {return accpetedValue;}
+    public synchronized String getacceptedValue() {return acceptedValue;}
     public synchronized int getLamportTimeStamp() {return lamportTimeStamp;}
 
 
@@ -126,9 +100,7 @@ public class Control extends Thread {
         promiseSet.put(promiseID,promiseValue);
     }
 
-    public synchronized void clearPromiseSet(){ promiseSet.clear();
-    }
-
+    public synchronized void clearPromiseSet(){ promiseSet.clear(); }
 
     public synchronized void clearAckNumber(){ ackNumber = 0; }
 
@@ -142,6 +114,7 @@ public class Control extends Thread {
         setPromisedID(proposalID);
         String msg = Command.createPropose(tempStamp,uniqueId);
         for (Connection connection:neighbors){
+            // For each connected server, send one "Prepare" message.
             Propose propose = new Propose(msg,connection);
         }
         log.info("Start Selection on " + uniqueId);
@@ -372,8 +345,6 @@ public class Control extends Thread {
             log.error(e);
         }
 
-
-
         // initialize the connections array
         connections = new HashMap<Connection,Boolean>();
         connectionClients = new ArrayList<Connection>();
@@ -425,19 +396,17 @@ public class Control extends Thread {
         Thread serverAnnouce = new ServerAnnounce();
         serverAnnouce.start();
     }
-
     
     public synchronized static HashMap<Connection, String> getUserConnections(){
         return userConnections;
     }
-
 
     public synchronized void createServerConnection(String hostname, int port) {
         try {
                 Connection con = outgoingConnection(new Socket(hostname, port));
                 JSONObject authenticate = Command.createAuthenticate(Settings.getSecret(), uniqueId);
                 String remoteId;
-                if(hostname == "localhost"){
+                if(hostname.equals("localhost")){
                     remoteId = ip.getHostAddress() + " " + port;
                 }else{
                     remoteId = hostname + " " + port;
@@ -653,6 +622,7 @@ public class Control extends Thread {
                             }
 
                         case ACCEPT:
+                            // To reply the "ACCEPT" message with either "ACCEPTED" or "NACK"
                             if (!Command.checkValidAccept(userInput)){
                                 String invalidAccept = Command.createInvalidMessage("Invalid Accept Message Format");
                                 con.writeMsg(invalidAccept);
@@ -664,6 +634,8 @@ public class Control extends Thread {
                             }
 
                         case ACCEPTED:
+                            // Keep record of all these ACCEPTED message,
+                            // broadcast DECIDE message after gathering more than a half of the servers
                             if (!Command.checkValidAccepted(userInput)){
                                 String invalidAccepted = Command.createInvalidMessage("Invalid Accepted Message Format");
                                 con.writeMsg(invalidAccepted);
@@ -758,6 +730,9 @@ public class Control extends Thread {
                             }
 
                         case NACK:
+                            // This means there is some other server proposed with a higher proposal ID
+                            // Any server that received this message must abort its proposal
+                            // (used when trying to make selection)
                             if (!Command.checkValidNack(userInput)){
                                 String invalidNack = Command.createInvalidMessage("Invalid Nack Message Format");
                                 con.writeMsg(invalidNack);
@@ -772,8 +747,8 @@ public class Control extends Thread {
                             }
 
                         case PREPARE:
-                            // So receiving a selection is equal to receiving a PREPARE message
-                            // And the response is a PROMISE message
+                            // So receiving a selection proposal is equal to receiving this PREPARE message
+                            // And the response is a PROMISE message or a NACK message
                             if (!Command.checkValidPrepare(userInput)){
                                 String invalidPrepare = Command.createInvalidMessage("Invalid Propose Message Format");
                                 con.writeMsg(invalidPrepare);
@@ -785,6 +760,8 @@ public class Control extends Thread {
                             }
 
                         case DECIDE:
+                            // This message means a consensus has been done by most of the other servers
+                            // Any server receives this message must set its own value the same as what is in this message
                             if (!Command.checkValidDecide(userInput)){
                                 String invalidDecide = Command.createInvalidMessage("Invalid Decide Message Format");
                                 con.writeMsg(invalidDecide);
@@ -1017,32 +994,25 @@ public class Control extends Thread {
         return value;
     }
 
-    public synchronized void setAcceptedID(UniqueID ID) {accpetedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
-
-    public synchronized void setProposalID(UniqueID ID) {proposalID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+    public synchronized void setAcceptedID(UniqueID ID) {acceptedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
 
     public synchronized void clearAcceptor()
     {
+        // Remove all the record of this round, triggered after a DECIDE has been made
         promisedID = null;
-        accpetedID = null;
-        accpetedValue = null;
-    }
-
-    public synchronized void clearProposer()
-    {
-        promisedID = null;
-        accpetedID = null;
+        acceptedID = null;
+        acceptedValue = null;
     }
 
     public synchronized void setPromisedID(UniqueID ID) {
 
         promisedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());
-        log.info("PromisedID Here " + promisedID.getServerID());
+        log.info("PromisedID generated on server " + promisedID.getServerID());
     }
 
-    // Define the leader connection as well
+    // Set the leader address as well
     public synchronized void setAcceptedValue(String value) {
-        accpetedValue = value;
+        acceptedValue = value;
         leaderAddress = value;
     }
 

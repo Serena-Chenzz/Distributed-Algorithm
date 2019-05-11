@@ -16,6 +16,10 @@ import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
+// A proposer needs to call this class when it tries to send a proposal.
+// The message sent out is called PREPARE.
+// In this PREPARE message there is only one Proposal ID, (which has two parts)
+// a lamportTimeClock integer and an IP Address + Port string.
 public class Propose {
     private static Connection conn;
     private static final Logger log = LogManager.getLogger();

@@ -1,6 +1,7 @@
 package activitystreamer.models;
 
 public class UniqueID {
+    // These two elements ensure one Unique ID object can describe one global unique status of one server
     private int lamportTimeStamp;
     private String serverID;
 
@@ -35,13 +36,15 @@ public class UniqueID {
         if(this.getLamportTimeStamp() > id2.getLamportTimeStamp()){
             return true;
         }
-        else if (this.getLamportTimeStamp() == id2.getLamportTimeStamp() && this.getServerID().compareTo(id2.getServerID()) > 0 ){
+        else if (this.getLamportTimeStamp() == id2.getLamportTimeStamp()
+                && this.getServerID().compareTo(id2.getServerID()) > 0 ){
             return true;
         }
         return false;
     }
 
     public boolean equals(UniqueID id2){
-        return (this.lamportTimeStamp == id2.getLamportTimeStamp() && this.serverID.equals(id2.getServerID()));
+        return (this.lamportTimeStamp == id2.getLamportTimeStamp()
+                && this.serverID.equals(id2.getServerID()));
     }
 }

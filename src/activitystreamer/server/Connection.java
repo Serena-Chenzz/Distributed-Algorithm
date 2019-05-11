@@ -29,7 +29,7 @@ public class Connection extends Thread {
     private boolean open = false;
     private Socket socket;
     private boolean term = false;
-    private String remoteId = "";
+    private String remoteId = ""; // The opposite server IP Address + Port
     //We record starting time to calculate the disconnection time
     private long timerStart = 0;
     
@@ -118,14 +118,21 @@ public class Connection extends Thread {
                 closeCon();
             }
             catch (SocketException e){
+                // If there is any server gets crashed, all other servers will throw this exception
+                // But things can be a little different on Mac OS,
+                // because this exception works in different ways.
+
                 log.debug("socketException"+e.getMessage());
                 if (term){
                     open=false;
                 }
 
+                // Check if the crashed server is the leader. if so
                 if (remoteId.equals(Control.getInstance().getLeaderAddress()))
                 {
                     log.info("Leader gets crushed.");
+
+                    // remove the local record of the leader address
                     for (Connection connection:Control.getInstance().getNeighbors())
                     {
                         if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
@@ -135,6 +142,10 @@ public class Connection extends Thread {
                             break;
                         }
                     }
+
+                    // start a new selection proposal, with its own largest DB Index as the LamportTimeClock
+                    // So only the remained server with the global largest DB Index can win this selection
+                    // Under this circumstance, all servers will take part in this selection.
                     Control.getInstance().clearAcceptor();
                     Control.setLeaderHasBeenDecided(false);
                     int myLargestIndexInDB = Control.getMyLargestDBIndex();

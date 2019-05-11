@@ -16,8 +16,17 @@ import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
+// Called when an ACCEPTED message is received from an acceptor
+// An ACCEPTED message should contain:
+// the Proposal ID of this round's largest proposer that the acceptor knows
+// (only in those proposal ID seen by this acceptor, so maybe not the globally largest)
+// Each time the proposer with the same proposal ID receives one ACCEPTED,
+// it add one to its own ackNumber.
+// When its ackNumber record is equal to [(number of all other servers) / 2 + 1],
+// this proposer knows it has gathered enough ACKs,
+// so the global consensus can be reached, the value is what it has sent to other servers before.
+// And this proposer will broadcast a DECIDE message to all learners.
 public class Accepted {
-    //private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
 
@@ -36,7 +45,7 @@ public class Accepted {
             if (proposalID.equals(Control.getInstance().getProposalID())) {
                 Control.getInstance().addAckNumber();
                 if (Control.getInstance().getAckNumber() == (Control.getInstance().getNeighbors().size() / 2 + 1)) {
-                    sendDecide(Control.getInstance().getAccpetedValue());
+                    sendDecide(Control.getInstance().getacceptedValue());
                     Control.getInstance().setAcceptedID(proposalID);
 
                 }

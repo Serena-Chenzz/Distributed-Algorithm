@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package activitystreamer.server.commands;
 
 import activitystreamer.models.Command;
@@ -23,11 +18,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-/**
- *
- * @author wknje
- */
-public class Decide{ //extends Thread
+// Just set the local value to what is attached in this DECIDE message,
+// no matter under what circumstance.
+// A DECIDE message only contains the final agreed value.
+public class Decide{
     private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
