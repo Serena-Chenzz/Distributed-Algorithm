@@ -18,6 +18,8 @@ public class Settings {
 	private static int activityInterval = 5000; // milliseconds
 	private static String secret = null;
 	private static String username = "anonymous";
+
+	// The following 2 sqlite urls need to be modified according to your own db address locally.
 	private static String sqlUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/Distributed-Algorithm/dbs/UserTest.db";
 	private static String sqlLogUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/Distributed-Algorithm/dbs/log.db";
     private static boolean initiateElection = false;
@@ -96,11 +98,6 @@ public class Settings {
 		Settings.localHostname = localHostname;
 	}
 
-	
-	/*
-	 * some general helper functions
-	 */
-	
 	public static String socketAddress(Socket socket){
 		return socket.getInetAddress()+":"+socket.getPort();
 	}

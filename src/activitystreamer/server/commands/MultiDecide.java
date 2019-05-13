@@ -1,15 +1,11 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import activitystreamer.models.*;
 import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
@@ -28,21 +24,23 @@ public class MultiDecide {
             int index = (int)indexLong;
             String value = message.get("value").toString();
 
-            //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
+            // First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, abort the server since
+            // it is in an inconsistent state.
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();
             if(myFirstUnchosenIndex < index){
-                // Notify the user about the error
+                // Notify the console about the error
                 log.error("Please restart the system, the system is in an inconsistent state...");
                 System.exit(1);
             }
             else{
+                // Write into local log DB
                 Control.writeIntoLogDB(index, value);
+                // Do corresponding actions in ticket selling DB.
                 Control.slavePerformAction(value, index);
-                //Remove from UnChosenLogs
+                // Remove from UnChosenLogs
                 Control.removeFromUnchosenLogs();
                 closeConnection = false;
             }
-
 
         }catch (ParseException e) {
             log.debug(e);

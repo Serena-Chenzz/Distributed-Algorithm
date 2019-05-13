@@ -1,15 +1,10 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-
 
 import activitystreamer.models.*;
 import activitystreamer.server.Connection;
@@ -21,6 +16,10 @@ public class MultiAccept {
     private static Connection conn;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
+
+    // When the leader receives a request from client sequentially, it will send Multi_Accept msg to all other servers
+    // to notify all participants in distributed server system. Whenever the server receives the msg, it will append
+    // the msg to its own unchosen logs and return accept msg to the leader.
 
     public MultiAccept(String msg, Connection con){
         conn = con;
@@ -34,11 +33,14 @@ public class MultiAccept {
             long indexLong = (long)message.get("index");
             int index = (int) indexLong;
 
-            //First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, write the missing logs into the db
+            // First, check if its firstUnchosenIndex < leader's firstUnchosenInde, if so, abort the server since it
+            // is in an inconsistent state against the global system.
+
             int myFirstUnchosenIndex = Control.getFirstUnchosenIndex();
             if(myFirstUnchosenIndex < leaderFirstUnchosenIndex){
                 // Notify the user about the error
                 log.error("Please restart the system, the system is in an inconsistent state...");
+                // Abort the server.
                 System.exit(1);
             }
             else{

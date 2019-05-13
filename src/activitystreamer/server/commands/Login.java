@@ -2,9 +2,6 @@ package activitystreamer.server.commands;
 
 import activitystreamer.server.Connection;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import activitystreamer.util.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,14 +48,6 @@ public class Login {
                 conn.writeMsg(loginSuccess.toJSONString());
                 closeConnection = false;
                 //Control.setConnectionClients(conn);
-
-//                //also change the login status for the user in the database
-//                int userId = result.getInt("UserId");
-//                String sqlUpdate = "UPDATE User SET LoggedInOrNot = 1 WHERE UserId = ? ;";
-//                PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
-//                pstmt.setInt(1, userId);
-//                // update
-//                pstmt.executeUpdate();
 
             }else { 
                 //If this username and secret are not correct, we send a login_failed

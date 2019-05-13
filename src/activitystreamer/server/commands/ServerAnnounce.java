@@ -53,7 +53,6 @@ public class ServerAnnounce extends Thread{
 								Control.getInstance().getUniqueId(),load,Settings.getLocalHostname(),Settings.getLocalPort()
 						);
 					}
-					 
 					//Control.getInstance().broadcast(serverAnnounce.toJSONString());
 					Thread.sleep(Settings.getActivityInterval());
 				} catch (InterruptedException e) {
@@ -65,10 +64,8 @@ public class ServerAnnounce extends Thread{
 			log.debug("doing activity");
 			Control.getInstance().setTerm(doActivity());
 		}
-		
 		log.info("closing "+connections.size()+" connections");
-		// clean up
-        //Use iterator to avoid concurrency issues
+
         for(Iterator<Entry<Connection, Boolean>> it = connections.entrySet().iterator();it.hasNext();){
             Entry<Connection, Boolean> newEntry = it.next();
             Connection con = newEntry.getKey();

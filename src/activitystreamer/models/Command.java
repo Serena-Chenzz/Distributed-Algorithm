@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import activitystreamer.server.Message;
+/*This class covers all the commands used by the system.
+* Each command corresponds to a format of message transferred between server & server or server & client
+* */
 
 
 public enum Command {
@@ -29,10 +28,8 @@ public enum Command {
         }
         return false;
     }
-    
 
-    
-    //Create LOGIN JSON object.
+    // The following methods are to create these command messages.
     @SuppressWarnings("unchecked")
     public static JSONObject createLogin(String username, String secret){
         JSONObject obj = new JSONObject();
@@ -47,6 +44,7 @@ public enum Command {
         }  
         return obj;  
     }
+
     @SuppressWarnings("unchecked")
     public static JSONObject createLogout(String username, String secret){
         JSONObject obj = new JSONObject();
@@ -301,7 +299,6 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    // added in the evening of 04-28
     public static String createDecide(String value){
         JSONObject obj = new JSONObject();
         obj.put("command", DECIDE.toString());
@@ -393,7 +390,8 @@ public enum Command {
     }
 
     
-    //The following methods are used to check if a command message is in a right format
+    //The following methods are used to check if a command message is in a correct format
+
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
     public static boolean checkValidCommandFormat1(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("username")&&obj.containsKey("secret")){
@@ -501,7 +499,7 @@ public enum Command {
         return false;
     }
 
-    //For Decide new added
+    //For Decide
     public static boolean checkValidDecide(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("value")){
             return true;

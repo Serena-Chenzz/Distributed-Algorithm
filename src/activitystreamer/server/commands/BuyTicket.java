@@ -1,8 +1,5 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -24,6 +21,13 @@ public class BuyTicket {
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private static final String sqlUrl = Settings.getSqlUrl();
+
+    // This class is used when the client wants to buy the ticket from the system.
+    // If this message is received directly by a leader, the leader will reply to the client directly.
+    // If this message is relayed by another server to the leaser, the leader will reply to the server and the server
+    // will relay the response back to the client.
+    // If this message is received by a learner server, it will perform the operations to its DB and keep up with the
+    // global database state.
 
     public BuyTicket(String msg, Connection con, int flag){
         //Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation

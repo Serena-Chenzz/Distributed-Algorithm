@@ -1,16 +1,11 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-
 
 import activitystreamer.models.*;
 import activitystreamer.server.Connection;
@@ -19,7 +14,6 @@ import activitystreamer.util.Settings;
 
 import java.sql.*;
 
-
 public class RefreshRequest {
 
     private static Connection conn;
@@ -27,6 +21,9 @@ public class RefreshRequest {
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
     private static final String sqlUrl = Settings.getSqlUrl();
+
+    // This class is used when the client wants to refresh the panel about the latest ticket information
+    // Or when the client click on any button and the panel info needs to be refreshed.
 
     public RefreshRequest(String msg, Connection con){
         conn = con;
@@ -47,9 +44,8 @@ public class RefreshRequest {
                 userId = result.getInt("UserId");
             }
 
-            //Retreive the train info
+            // Retrieve the train info (including left ticket number)
             JSONObject trainInfo = new JSONObject();
-            //Check whether this user has been registered in the sqlite database
             String sqlTrainQuery = "SELECT * FROM Train;";
             ResultSet trainRes = stmt.executeQuery(sqlTrainQuery);
 
@@ -57,7 +53,7 @@ public class RefreshRequest {
                 trainInfo.put(trainRes.getInt("TrainId"), trainRes.getInt("LeftTickets"));
             }
 
-            //Retreive the user's purchase records.
+            //Retrieve the user's purchase records.
             JSONArray ticketInfo = new JSONArray();
             String sqlTicketQuery = "SELECT * FROM Ticket WHERE UserId = '"+ userId + "';";
             ResultSet ticketResult = stmt.executeQuery(sqlTicketQuery);
@@ -66,6 +62,7 @@ public class RefreshRequest {
                 ticketInfo.add(ticketResult.getInt("TrainId"));
             }
 
+            // Return back the refreshed ticket info
             conn.writeMsg(Command.createRefreshInfo(username, trainInfo, ticketInfo));
             sqlConnection.close();
             closeConnection = false;

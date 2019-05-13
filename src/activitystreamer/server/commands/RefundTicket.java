@@ -1,8 +1,5 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -23,7 +20,9 @@ public class RefundTicket {
     private static boolean closeConnection=false;
     private static final String sqlUrl =Settings.getSqlUrl();
 
+    // Similar to BuyTicket Class, this class is used when a client needs to refund the ticket.
     public RefundTicket(String msg, Connection con, int flag){
+        // Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation
         conn = con;
         try{
             sqlConnection = DriverManager.getConnection(sqlUrl);
@@ -34,7 +33,6 @@ public class RefundTicket {
             long trainLongId =0;
             int trainId = 0;
             String refundTime = "";
-
 
             if(flag == 1 || flag == 3){
                 username = message.get("username").toString();

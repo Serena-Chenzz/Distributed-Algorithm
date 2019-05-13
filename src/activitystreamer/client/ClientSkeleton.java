@@ -9,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,9 +40,11 @@ public class ClientSkeleton extends Thread {
         return clientSolution;
     }
 
-    //When we create a client, we open up a socket!
-    //The reason is for the client to handle different messages but using the same socket.
-    //Create buffered reader and writer to receive/write message
+    /*When we create a client, we open up a socket!
+    The reason is for the client to handle different messages but using the same socket.
+    Create buffered reader and writer to receive/write message
+    */
+
     public ClientSkeleton() {
         try {
             Socket socket = new Socket(Settings.getRemoteHostname(), Settings.getRemotePort());
@@ -124,12 +125,12 @@ public class ClientSkeleton extends Thread {
                                         break;
                                     }
                                     else{
-                                        //Sending Refresh_req
+                                        //Sending Refresh_req in order to receive the latest info about the ticket info
                                         writeMsg(Command.createRefreshRequest(Settings.getUsername()));
                                         open=true;
                                     }
                                     break;
-                                //If the client receives the failed message, it will close the socket
+                                //If the client receives the Register_Failed message, it will close the socket
                                 case REGISTER_FAILED:
                                     if(!Command.checkValidCommandFormat2(resObj)){
                                         String invalidRegFail = Command.createInvalidMessage("Invalid RegisterFailed Message Format");
@@ -142,6 +143,7 @@ public class ClientSkeleton extends Thread {
                                         log.info("Register fails, close connection...");
                                     }
                                     break;
+                                //If the client receives the Login_Failed info, it will close the socket
                                 case LOGIN_FAILED:
                                     if(!Command.checkValidCommandFormat2(resObj)){
                                         String invalidLogFail = Command.createInvalidMessage("Invalid LoginFailed Message Format");
@@ -164,6 +166,7 @@ public class ClientSkeleton extends Thread {
                                     else{
                                         open = true;
                                         log.info("Refreshing Display Panel");
+                                        //When the client receives Refresh_Info, it will display the panel with refreshed info on it
                                         JSONObject trainInfo = (JSONObject) resObj.get("ticketInfo");
                                         JSONArray buyingInfo = (JSONArray) resObj.get("purchaseInfo");
                                         textFrame.enterSellingPanel(trainInfo, buyingInfo);
@@ -179,6 +182,7 @@ public class ClientSkeleton extends Thread {
                                     else{
                                         open = true;
                                         log.info("Refreshing Display Panel... Purchase Success");
+                                        //Displey purchase_success info to the client
                                         textFrame.purchaseSuccessMsg();
                                     }
                                     break;
@@ -192,6 +196,7 @@ public class ClientSkeleton extends Thread {
                                     else{
                                         open = true;
                                         log.info("Refreshing Display Panel... Purchase Failed");
+                                        //Display purchase_fail message to the client
                                         textFrame.purchaseFailMsg();
                                     }
                                     break;
@@ -205,6 +210,7 @@ public class ClientSkeleton extends Thread {
                                     else{
                                         open = true;
                                         log.info("Refreshing Display Panel... Refund Success");
+                                        //Display refund_success message to the client
                                         textFrame.refundSuccessMsg();
                                     }
                                     break;
@@ -234,8 +240,7 @@ public class ClientSkeleton extends Thread {
                     break;
                 }
             }
-        } 
-        catch (EOFException e) {
+        } catch (EOFException e) {
             log.debug("Closing connection...." + Settings.socketAddress(socket));
         } catch (IOException e) {
             log.error("connection " + Settings.socketAddress(socket) + " closed with exception: " + e);

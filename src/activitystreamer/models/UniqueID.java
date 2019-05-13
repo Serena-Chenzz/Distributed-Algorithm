@@ -18,7 +18,6 @@ public class UniqueID {
         return serverID;
     }
 
-    // added in the evening of 04-28
     public void setServerID(String serverID){
         this.serverID = serverID;
     }

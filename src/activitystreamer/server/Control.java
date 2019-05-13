@@ -52,62 +52,108 @@ public class Control extends Thread {
     private static HashMap<Integer,HashMap<String, Integer>> findMissingLog;
     private static HashMap<Integer, Integer> acceptedCounter;
     private static int missingAckCounter = 0;
-    //Unchosen Log List
+    // Unchosen Log List
     private static LinkedList<String> unChosenLogs;
-    //Corresponding Connections
+    // Corresponding Unchosen Log Connections
     private static LinkedList<Connection> unChosenConnection;
     private static int firstUnchosenIndex;
     private static boolean leaderHasBeenDecided;
 
-    public static void setLeaderAddress(String leaderAddress) { Control.leaderAddress = leaderAddress; }
-    public String getLeaderAddress() { return leaderAddress; }
-
     private static LinkedList<Integer> DBIndexList;
     private static int myLargestDBIndex;
-
-    public static int getMyLargestDBIndex(){return myLargestDBIndex;}
-    public synchronized String getproposedValue(){ return proposedValue; }
-    public synchronized void setProposedValue(String value){ proposedValue = value;}
-    public static int getMissingAckCounter(){ return missingAckCounter; }
-    public static HashMap<Integer,HashMap<String, Integer>> getFindMissingLog(){return findMissingLog;}
-
-    public synchronized int getAckNumber(){ return ackNumber; }
-
-    public synchronized void addAckNumber() {ackNumber += 1;}
 
     protected static Control control = null;
     protected static Load serverLoad;
 
-    public synchronized UniqueID getacceptedID() {return acceptedID;}
-
-    public synchronized UniqueID getPromisedID() {return promisedID;}
-
-    public synchronized String getacceptedValue() {return acceptedValue;}
-    public synchronized int getLamportTimeStamp() {return lamportTimeStamp;}
-
-
-    public synchronized UniqueID getProposalID() {return proposalID;}
-    
+    public static void setLeaderAddress(String leaderAddress) {
+        Control.leaderAddress = leaderAddress;
+    }
+    public String getLeaderAddress() {
+        return leaderAddress;
+    }
+    public static int getMyLargestDBIndex(){
+        return myLargestDBIndex;
+    }
+    public synchronized String getproposedValue(){
+        return proposedValue;
+    }
+    public synchronized void setProposedValue(String value){
+        proposedValue = value;
+    }
+    public static int getMissingAckCounter(){
+        return missingAckCounter;
+    }
+    public static HashMap<Integer,HashMap<String, Integer>> getFindMissingLog(){
+        return findMissingLog;
+    }
+    public synchronized int getAckNumber(){
+        return ackNumber;
+    }
+    public synchronized void addAckNumber() {
+        ackNumber += 1;
+    }
+    public synchronized UniqueID getacceptedID() {
+        return acceptedID;
+    }
+    public synchronized UniqueID getPromisedID() {
+        return promisedID;
+    }
+    public synchronized String getacceptedValue() {
+        return acceptedValue;
+    }
+    public synchronized int getLamportTimeStamp() {
+        return lamportTimeStamp;
+    }
+    public synchronized UniqueID getProposalID() {
+        return proposalID;
+    }
     public synchronized ArrayList<Connection> getNeighbors(){
         return neighbors;
     }
-
     public synchronized HashMap<UniqueID,String> getPromiseSet(){
         return promiseSet;
     }
-
     public synchronized void addToPromiseSet(UniqueID promiseID,String promiseValue){
         promiseSet.put(promiseID,promiseValue);
     }
+    public synchronized void clearPromiseSet(){
+        promiseSet.clear();
+    }
+    public synchronized void clearAckNumber(){
+        ackNumber = 0;
+    }
+    public void addLamportTimeStamp(){
+        lamportTimeStamp++;
+    }
+    public static int getFirstUnchosenIndex(){
+        return firstUnchosenIndex;
+    }
+    public synchronized static void setFirstUnchosenIndex(int index){
+        firstUnchosenIndex = index;
+    }
+    public static synchronized String getLogFromUnchosenLogs(){
+        return unChosenLogs.getFirst();
+    }
+    public static synchronized Connection getConFromUnchosenLogs(){
+        return unChosenConnection.getFirst();
+    }
+    public synchronized static void setLeaderHasBeenDecided(boolean flag){
+        leaderHasBeenDecided = flag;
+    }
+    public synchronized static boolean getLeaderHasBeenDecided(){
+        return leaderHasBeenDecided;
+    }
+    public synchronized static String getRemoteId(){
+        return uniqueId;
+    }
+    public synchronized static Load getServerLoad() {
+        return serverLoad;
+    }
+    public synchronized static HashMap<Connection, String> getUserConnections(){
+        return userConnections;
+    }
 
-    public synchronized void clearPromiseSet(){ promiseSet.clear(); }
-
-    public synchronized void clearAckNumber(){ ackNumber = 0; }
-
-    public void addLamportTimeStamp(){ lamportTimeStamp++;}
-
-
-
+    // Election method
     public void sendSelection(int tempStamp){
         lamportTimeStamp++;
         proposalID = new UniqueID(tempStamp,uniqueId);
@@ -130,10 +176,6 @@ public class Control extends Thread {
         unChosenLogs = new LinkedList<String>();
         unChosenConnection = new LinkedList<Connection>();
     }
-
-    public static int getFirstUnchosenIndex(){return firstUnchosenIndex;}
-
-    public synchronized static void setFirstUnchosenIndex(int index){firstUnchosenIndex = index;}
 
     public static synchronized void recordMissingLog(int index, String s){
         missingAckCounter++;
@@ -176,14 +218,6 @@ public class Control extends Thread {
     public static synchronized void removeFromUnchosenLogs(){
         unChosenLogs.removeFirst();
         unChosenConnection.removeFirst();
-    }
-
-    public static synchronized String getLogFromUnchosenLogs(){
-        return unChosenLogs.getFirst();
-    }
-
-    public static synchronized Connection getConFromUnchosenLogs(){
-        return unChosenConnection.getFirst();
     }
 
     public static synchronized void writeIntoLogDB(int index, String msg){
@@ -234,12 +268,9 @@ public class Control extends Thread {
                     RefundTicket rt = new RefundTicket(message.toJSONString(), null, 3);
                     return;
             }
-
         }catch (ParseException e) {
             log.debug(e);
         }
-
-
     }
 
     public static synchronized void leaderPerformAction(String msg, Connection con, int index){
@@ -319,17 +350,6 @@ public class Control extends Thread {
         acceptedCounter = new HashMap<Integer, Integer>();
     }
 
-    public synchronized static void setLeaderHasBeenDecided(boolean flag){leaderHasBeenDecided = flag;}
-    public synchronized static boolean getLeaderHasBeenDecided(){return leaderHasBeenDecided;}
-    
-    public synchronized static String getRemoteId(){
-        return uniqueId;
-    }
-
-    public synchronized static Load getServerLoad() {
-        return serverLoad;
-    }
-
     public synchronized static Control getInstance() {
         if (control == null) {
             control = new Control();
@@ -338,17 +358,16 @@ public class Control extends Thread {
     }
 
     public Control() {
-    	// initialize ip 
+        // Initialize IP
         try {
             ip = InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
             log.error(e);
         }
 
-        // initialize the connections array
+        // Initialize some variables
         connections = new HashMap<Connection,Boolean>();
         connectionClients = new ArrayList<Connection>();
-        //connectionServers is to record all replies from its neighbors and record all connection status.
         connectionServers = new HashMap<String, ArrayList<String>>();
         neighbors = new ArrayList<Connection>();
         pendingNeighbors = new ArrayList<String>();
@@ -359,15 +378,14 @@ public class Control extends Thread {
         unChosenConnection = new LinkedList<Connection>();
         DBIndexList = new LinkedList<Integer>();
         leaderHasBeenDecided = false;
-
         serverLoad = new Load();
+
         if(Settings.getLocalHostname().equals("localhost")) {
         	uniqueId = ip.getHostAddress() + " " + Settings.getLocalPort();
         }else {
         	uniqueId = Settings.getLocalHostname() + " " + Settings.getLocalPort();
         }
 
-        //Also initiate myLargestDBIndex
         AskDBIndex myAsk = new AskDBIndex("", null, 3);
         myLargestDBIndex = myAsk.getMyLargestDBIndex();
         firstUnchosenIndex = myLargestDBIndex+1;
@@ -396,10 +414,7 @@ public class Control extends Thread {
         Thread serverAnnouce = new ServerAnnounce();
         serverAnnouce.start();
     }
-    
-    public synchronized static HashMap<Connection, String> getUserConnections(){
-        return userConnections;
-    }
+
 
     public synchronized void createServerConnection(String hostname, int port) {
         try {
@@ -446,9 +461,6 @@ public class Control extends Thread {
                 else{
                     addLamportTimeStamp();
                     Command userCommand = Command.valueOf(targetCommand);
-//                    if (leaderAddress == null && clientCommands.contains(userCommand)){
-//                        sendSelection(lamportTimeStamp);
-//                    }
                     switch (userCommand) {
                         //In any case, if it returns true, it closes the connection.
                         //In any case, we should first check whether it is a valid message format
@@ -496,10 +508,7 @@ public class Control extends Thread {
                                 log.debug("Add neighbor: " + con.getRemoteId());
                                 
                             }
-//                            if (con.getRemoteId().equals("10.0.0.42 3000")){
-//                                System.out.println("Here");
-//                                return true;
-//                            }
+
                             if (leaderAddress != null) {
                                 String decideMsg = Command.createDecide(leaderAddress);
                                 con.writeMsg(decideMsg);
@@ -909,9 +918,6 @@ public class Control extends Thread {
             con.writeMsg(invalidParseMsg);
             log.error("msg: " + msg + " has error: " + e);
         }
-//        catch (InterruptedException e){
-//            log.debug(e);
-//        }
         return true;
     }
     
@@ -932,15 +938,10 @@ public class Control extends Thread {
     public synchronized boolean broadcast(String msg) {     
         for (Connection nei : neighbors) {
             nei.writeMsg(msg);               
-        }    
-        // need failure model
+        }
         return true;
     }
-    
 
-    /*
-	 * The connection has been closed by the other party.
-     */
     public synchronized void connectionClosed(Connection con) {
         if (!term) {
             connections.remove(con);
@@ -994,7 +995,9 @@ public class Control extends Thread {
         return value;
     }
 
-    public synchronized void setAcceptedID(UniqueID ID) {acceptedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());}
+    public synchronized void setAcceptedID(UniqueID ID) {
+        acceptedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());
+    }
 
     public synchronized void clearAcceptor()
     {
@@ -1005,12 +1008,10 @@ public class Control extends Thread {
     }
 
     public synchronized void setPromisedID(UniqueID ID) {
-
         promisedID = new UniqueID(ID.getLamportTimeStamp(),ID.getServerID());
         log.info("PromisedID generated on server " + promisedID.getServerID());
     }
 
-    // Set the leader address as well
     public synchronized void setAcceptedValue(String value) {
         acceptedValue = value;
         leaderAddress = value;
@@ -1025,29 +1026,23 @@ public class Control extends Thread {
         term = t;
     }
     public final boolean getTerm() {
-    	return term;
+        return term;
     }
-
     public synchronized final HashMap<Connection, Boolean> getConnections() {
         return connections;
     }
-
     public HashMap<String, ArrayList<String>> getConnectionServers() {
         return connectionServers;
     }
-
     public synchronized String getUniqueId() {
         return uniqueId;
     }
-    
     public void listenAgain() {
-    	listener.setTerm(true);
+        listener.setTerm(true);
     }
-
 	public static ArrayList<Connection> getConnectionClients() {
-		return connectionClients;
+        return connectionClients;
 	}
-
 	public static void setConnectionClients(Connection con) {
 		log.debug("adding connection client: "+con);
 		connectionClients.add(con);

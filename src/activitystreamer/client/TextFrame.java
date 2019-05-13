@@ -11,22 +11,13 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 
 import activitystreamer.models.Command;
-import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
 @SuppressWarnings("serial")
@@ -66,7 +57,7 @@ public class TextFrame extends JFrame implements ActionListener {
         this.addWindowListener(new java.awt.event.WindowAdapter(){
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                //create logout msg
+                // When the client closes the window, we assume that the client logs out.
                 JSONObject logout = Command.createLogout(Settings.getUsername(), Settings.getSecret());
                 ClientSkeleton.getInstance().writeMsg(logout.toJSONString());
                 log.info("User is going to log out....");
@@ -74,6 +65,8 @@ public class TextFrame extends JFrame implements ActionListener {
             }
         });
 
+        /* The following layout is for the initial login panel
+        * */
 
         JLabel userLabel = new JLabel("Username");
         userLabel.setBounds(40, 20, 160, 50);
@@ -111,7 +104,8 @@ public class TextFrame extends JFrame implements ActionListener {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
     }
-    
+
+    // Whenever the listener receives an action, it will trigger the processing here.
     public synchronized void actionPerformed(ActionEvent e) {
 		if(e.getSource()==loginButton){
 			String username = userText.getText().trim().replaceAll("\r","").replaceAll("\n","").replaceAll("\t", "");
@@ -202,6 +196,9 @@ public class TextFrame extends JFrame implements ActionListener {
 
 
     }
+
+    /* The following layout is for the ticket selling panel
+     * */
 
 	public synchronized void enterSellingPanel(JSONObject ticketInfo, JSONArray buyingInfo){
         ArrayList<Integer> buyingTickets = new ArrayList<>();
@@ -320,9 +317,6 @@ public class TextFrame extends JFrame implements ActionListener {
         logoutButton.setFont(new Font("Arial", Font.PLAIN,20));
         ticketPanel.add(logoutButton);
         logoutButton.addActionListener(this);
-//
-//        ticketPanel.revalidate();
-//        ticketPanel.repaint();
         this.setVisible(true);
     }
 
@@ -342,9 +336,6 @@ public class TextFrame extends JFrame implements ActionListener {
         returnButton.setFont(new Font("Arial", Font.PLAIN,13));
         labelPanel.add(returnButton);
         returnButton.addActionListener(this);
-//
-//        labelPanel.revalidate();
-//        labelPanel.repaint();
         this.setVisible(true);
     }
 
@@ -354,7 +345,7 @@ public class TextFrame extends JFrame implements ActionListener {
         labelPanel = new JPanel();
         this.add(labelPanel);
 
-        JLabel userLabel = new JLabel("User: " + Settings.getUsername() + " failed to purchase the ticket. Be quick next time!");
+        JLabel userLabel = new JLabel("User: " + Settings.getUsername() + " failed to purchase the ticket.");
         userLabel.setBounds(40, 20, 800, 50);
         userLabel.setFont(new Font("Arial", Font.PLAIN,18));
         labelPanel.add(userLabel);
@@ -364,9 +355,6 @@ public class TextFrame extends JFrame implements ActionListener {
         returnButton.setFont(new Font("Arial", Font.PLAIN,13));
         labelPanel.add(returnButton);
         returnButton.addActionListener(this);
-//
-//        labelPanel.revalidate();
-//        labelPanel.repaint();
         this.setVisible(true);
     }
 
@@ -386,9 +374,6 @@ public class TextFrame extends JFrame implements ActionListener {
         returnButton.setFont(new Font("Arial", Font.PLAIN,13));
         labelPanel.add(returnButton);
         returnButton.addActionListener(this);
-//
-//        labelPanel.revalidate();
-//        labelPanel.repaint();
         this.setVisible(true);
     }
 
