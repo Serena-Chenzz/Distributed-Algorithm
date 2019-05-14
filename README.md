@@ -2,13 +2,13 @@
 Ticket Selling Distributed System
 
 # Explanations
-The system is built upon the assignment 2 of COMP90015.
-It is a java maven project to simulate multiple clients to buy/refund tickets in a distributed ticket selling system.
-Paxos Algorithm is applied to elect a leader server and also re-elect a leader when the current leader crashes.
-Multi-Paxos Algorithm is applied to deal with concurrent multi-client responses.
-Each server has a local database for logs and a local database for app-related data, including user information, ticket information, purchase history, etc.
-The goal of the application is to ensure the consistency of log database & ticket database of all the servers in the distributed system.
-Therefore, when the client connect to any server in the system, it will display consistent ticket information.
+1. The system is built upon the assignment 2 of COMP90015.
+2. It is a java maven project to simulate multiple clients to buy/refund tickets in a distributed ticket selling system.
+3. Paxos Algorithm is applied to elect a leader server and re-elect a leader when the current leader crashes.
+4. Multi-Paxos Algorithm is applied to deal with concurrent multi-client requests.
+5. Each server has a local database for logs and a local database for app-related data, which includes user information, ticket information, purchase history, etc.
+6. The goal of the application is to ensure the consistency of log database & ticket database of all the servers in the distributed system.
+7. Therefore, when the client connect to any server in the system, it will display consistent ticket information.
 
 # How to run the code
 1. It is suggested to open the project in an IDE (IntelliJ or Eclipse) Otherwise, you can package the application into jar files and run them. The two entry points are activitystreamer.Server and activitystreamer.Client
