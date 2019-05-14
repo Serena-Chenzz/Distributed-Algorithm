@@ -20,5 +20,8 @@ Parameter: -lh <Your_IP_Address> -lp <Your_Port_Number> -rh <Your_Destination_IP
 Parameter: -lh <Your_IP_Address> -lp <Your_Port_Number> -rh <Your_Destination_IP> -rp<Your_Destination_Port> -ifStartElection true
 5. To start a client
 Parameter: -rh <Server_IP_Address> -rp <Server_Port_Number>
-6. If you start two or more servers in one machine, you need to change your database file urls in the Settings file. Because different server should use a different DB url in one machine.
+
+# Attention!
+1. If you start two or more servers in one machine, you need to change your database file urls in the Settings file. Because different server should use a different DB url in one machine.
+2. If you want to simulate the situation when a server crashes, you have to terminate the server on the Windows machine. The reason is that only Windows system can trigger SocketException, which is designed in our application code.
 
