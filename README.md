@@ -8,7 +8,7 @@ Paxos Algorithm is applied to elect a leader server and also re-elect a leader w
 Multi-Paxos Algorithm is applied to deal with concurrent multi-client responses.
 Each server has a local database for logs and a local database for app-related data, including user information, ticket information, purchase history, etc.
 The goal of the application is to ensure the consistency of log database & ticket database of all the servers in the distributed system.
-Therefore, when the client connect to any server, it will display consistent ticket information.
+Therefore, when the client connect to any server in the system, it will display consistent ticket information.
 
 # How to run the code
 1. It is suggested to open the project in an IDE (IntelliJ or Eclipse) Otherwise, you can package the application into jar files and run them. The two entry points are activitystreamer.Server and activitystreamer.Client
