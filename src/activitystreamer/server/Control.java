@@ -1019,7 +1019,7 @@ public class Control extends Thread {
 
     public synchronized static void setLeaderConnection(String value){
         for(Connection con: Control.getInstance().getNeighbors()){
-            String address = con.getSocket().getInetAddress() + " " + con.getSocket().getPort();
+            String address = con.getRemoteId();
             if(address.equals(value)){
                 leader = con;
             }
