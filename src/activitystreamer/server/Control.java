@@ -1017,8 +1017,13 @@ public class Control extends Thread {
         leaderAddress = value;
     }
 
-    public synchronized static void setLeaderConnection(Connection con){
-        leader = con;
+    public synchronized static void setLeaderConnection(String value){
+        for(Connection con: Control.getInstance().getNeighbors()){
+            String address = con.getSocket().getInetAddress() + " " + con.getSocket().getPort();
+            if(address.equals(value)){
+                leader = con;
+            }
+        }
         log.info("The leader connection has been set to: " + leaderAddress);
     }
 

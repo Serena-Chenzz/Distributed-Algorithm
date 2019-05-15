@@ -45,7 +45,6 @@ public class Connection extends Thread {
         outwriter = new PrintWriter(out, true);
         this.socket = socket;
         open = true;
-
         //remoteId = socket.getInetAddress() + ":" + socket.getPort();
         start();
     }

@@ -53,8 +53,8 @@ public class MissingLogInfo {
 
             if(Control.getMissingAckCounter() >= length * N){
                 writeIntoDB(startIndex, endIndex);
+                Control.cleanUpMissingLog();
             }
-            Control.cleanUpMissingLog();
 
         }catch (ParseException e) {
             log.debug(e);

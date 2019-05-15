@@ -38,7 +38,7 @@ public class Decide{
             //start();
             log.info("Learned from leader " + value);
             Control.setLeaderHasBeenDecided(true);
-            Control.setLeaderConnection(con);
+            Control.setLeaderConnection(value);
             Control.getInstance().clearAcceptor();
         }catch (ParseException e) {
             log.debug(e);
