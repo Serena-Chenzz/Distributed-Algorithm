@@ -1,0 +1,7 @@
+A ticket selling system based on PAXOS
+883241 Lu Chen:25%
+870530 Mingyuan Cui:25%
+854430 Baihui Ren:25%
+916743 Kening Wu:25%
+
+
