@@ -2,9 +2,7 @@ package activitystreamer.server.commands;
 
 import activitystreamer.server.Connection;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import activitystreamer.util.Settings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -24,8 +22,7 @@ public class Login {
 	private String msg;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
-    private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
+    private static final String sqlUrl = Settings.getSqlUrl();
 
     public Login(Connection con, String msg) {
     	this.conn = con;
@@ -50,15 +47,7 @@ public class Login {
                 JSONObject loginSuccess = Command.createLoginSuccess(username);
                 conn.writeMsg(loginSuccess.toJSONString());
                 closeConnection = false;
-                Control.setConnectionClients(conn);
-
-                //also change the login status for the user in the database
-                int userId = result.getInt("UserId");
-                String sqlUpdate = "UPDATE User SET LoggedInOrNot = 1 WHERE UserId = ? ;";
-                PreparedStatement pstmt = sqlConnection.prepareStatement(sqlUpdate);
-                pstmt.setInt(1, userId);
-                // update
-                pstmt.executeUpdate();
+                //Control.setConnectionClients(conn);
 
             }else { 
                 //If this username and secret are not correct, we send a login_failed

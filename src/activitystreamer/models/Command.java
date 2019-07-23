@@ -2,19 +2,21 @@ package activitystreamer.models;
 
 import java.util.ArrayList;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-import activitystreamer.server.Message;
+/*This class covers all the commands used by the system.
+* Each command corresponds to a format of message transferred between server & server or server & client
+* */
 
 
 public enum Command {
     AUTHENTICATE, INVALID_MESSAGE, AUTHENTICATION_FAIL, AUTHENTICATION_SUCCESS, LOGIN, LOGIN_SUCCESS, 
     REDIRECT, LOGIN_FAILED, LOGOUT, ACTIVITY_MESSAGE, SERVER_ANNOUNCE,
-    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE,
-    PROMISE, NACK, DECIDE,
+    ACTIVITY_BROADCAST, REGISTER, REGISTER_FAILED, REGISTER_SUCCESS, ACCEPT, ACCEPTED, PREPARE, PROPOSE, DECIDE,
+    PROMISE, NACK, BUY_TICKET, REFUND_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL, REFUND_SUCCESS,REFRESH_REQUEST,
+    REFRESH_INFO,ABORT, MULTI_ACCEPT, GET_MISSING_LOG, MISSING_LOG_INFO, MULTI_ACCEPTED, MULTI_DECIDE, RELAY_MESSAGE,
+    ASK_DB_INDEX, REPLY_DB_INDEX, ASK_LEADER_DB_INDEX, REPLY_LEADER_DB_INDEX
     ;
 
 
@@ -26,10 +28,8 @@ public enum Command {
         }
         return false;
     }
-    
 
-    
-    //Create LOGIN JSON object.
+    // The following methods are to create these command messages.
     @SuppressWarnings("unchecked")
     public static JSONObject createLogin(String username, String secret){
         JSONObject obj = new JSONObject();
@@ -44,6 +44,7 @@ public enum Command {
         }  
         return obj;  
     }
+
     @SuppressWarnings("unchecked")
     public static JSONObject createLogout(String username, String secret){
         JSONObject obj = new JSONObject();
@@ -184,7 +185,7 @@ public enum Command {
         return obj.toJSONString();
 	}
 
-    public static String createAccept(int timeStamp, int serverID,String value){
+    public static String createAccept(int timeStamp, String serverID,String value){
         JSONObject obj = new JSONObject();
         obj.put("command", ACCEPT.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -193,15 +194,15 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createAccepted(int timeStamp, int serverID){
+    public static String createAccepted(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
-        obj.put("command", ACCEPT.toString());
-        obj.put("acceptedLamportTimeStamp", timeStamp);
-        obj.put("acceptedServerID", serverID);
+        obj.put("command", ACCEPTED.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
         return obj.toJSONString();
     }
 
-    public static String createPrepare(int timeStamp, int serverID){
+    public static String createPrepare(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", PREPARE.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -209,7 +210,7 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createPropose(int timeStamp, int serverID){
+    public static String createPropose(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", PROPOSE.toString());
         obj.put("lamportTimeStamp", timeStamp);
@@ -217,8 +218,8 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createPromise(int proposalLamportTimeStamp, int proposalServerID, int acceptedLamportTimeStamp,
-                                 int acceptedServerID, String value){
+    public static String createPromise(int proposalLamportTimeStamp, String proposalServerID, int acceptedLamportTimeStamp,
+                                 String acceptedServerID, String value){
         JSONObject obj = new JSONObject();
         obj.put("command", PROMISE.toString());
         obj.put("proposalLamportTimeStamp", proposalLamportTimeStamp);
@@ -229,16 +230,168 @@ public enum Command {
         return obj.toJSONString();
     }
 
-    public static String createNack(int timeStamp, int serverID){
+    public static String createNack(int timeStamp, String serverID){
         JSONObject obj = new JSONObject();
         obj.put("command", NACK.toString());
         obj.put("lamportTimeStamp", timeStamp);
         obj.put("serverID", serverID);
         return obj.toJSONString();
     }
+
+    public static String createBuyTicket(int trainNum, String username, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", BUY_TICKET.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("username", username);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefundTicket(int trainNum, String username, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFUND_TICKET.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("username", username);
+        obj.put("refundTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createPurchaseSuccess(int trainNum, String username, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PURCHASE_SUCCESS.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("username", username);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createPurchaseFail(int trainNum, String username, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", PURCHASE_FAIL.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("username", username);
+        obj.put("purchaseTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefundSuccess(int trainNum, String username, String time){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFUND_SUCCESS.toString());
+        obj.put("trainNum", trainNum);
+        obj.put("username", username);
+        obj.put("refundTime", time);
+        return obj.toJSONString();
+    }
+
+    public static String createRefreshRequest(String username){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFRESH_REQUEST.toString());
+        obj.put("username", username);
+        return obj.toJSONString();
+    }
+
+    public static String createRefreshInfo(String username, JSONObject remainedTicketInfo, JSONArray boughtTicketInfo){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REFRESH_INFO.toString());
+        obj.put("username", username);
+        obj.put("ticketInfo", remainedTicketInfo);
+        obj.put("purchaseInfo", boughtTicketInfo);
+        return obj.toJSONString();
+    }
+
+    public static String createDecide(String value){
+        JSONObject obj = new JSONObject();
+        obj.put("command", DECIDE.toString());
+        obj.put("value", value);
+        return obj.toJSONString();
+    }
+
+    public static String createAbort(int timeStamp, String serverID){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ABORT.toString());
+        obj.put("lamportTimeStamp", timeStamp);
+        obj.put("serverID", serverID);
+        return obj.toJSONString();
+    }
+
+    public static String createMultiAccept(int index, String s, int firstUnchosenIndex){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_ACCEPT.toString());
+        obj.put("index", index);
+        obj.put("value", s);
+        obj.put("firstUnchosenIndex", firstUnchosenIndex);
+        return obj.toJSONString();
+    }
+
+    public static String createGetMissingLog(int startIndex, int endIndex){
+        JSONObject obj = new JSONObject();
+        obj.put("command", GET_MISSING_LOG.toString());
+        obj.put("startIndex", startIndex);
+        obj.put("endIndex", endIndex);
+        return obj.toJSONString();
+    }
+
+    public static String createMissingLogInfo(JSONObject pairs, int startIndex, int endIndex){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MISSING_LOG_INFO.toString());
+        obj.put("values", pairs);
+        obj.put("startIndex", startIndex);
+        obj.put("endIndex", endIndex);
+        return obj.toJSONString();
+    }
+
+    public static String createRelayMsg(String client, String msg){
+        JSONObject obj = new JSONObject();
+        obj.put("command", RELAY_MESSAGE.toString());
+        obj.put("clientConnection", client);
+        obj.put("message", msg);
+        return obj.toJSONString();
+    }
+
+    public static String createMultiAccepted(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_ACCEPTED.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
+
+    public static String createMultiDecide(int index, String msg){
+        JSONObject obj = new JSONObject();
+        obj.put("command", MULTI_DECIDE.toString());
+        obj.put("index", index);
+        obj.put("value", msg);
+        return obj.toJSONString();
+    }
+
+    public static String createAskDBIndex(){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ASK_DB_INDEX.toString());
+        return obj.toJSONString();
+    }
+
+    public static String createAskLeaderDBIndex(){
+        JSONObject obj = new JSONObject();
+        obj.put("command", ASK_LEADER_DB_INDEX.toString());
+        return obj.toJSONString();
+    }
+
+    public static String createReplyDBIndex(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REPLY_DB_INDEX.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
+
+    public static String createReplyLeaderDBIndex(int index){
+        JSONObject obj = new JSONObject();
+        obj.put("command", REPLY_LEADER_DB_INDEX.toString());
+        obj.put("index", index);
+        return obj.toJSONString();
+    }
+
     
-    
-    //The following methods are used to check if a command message is in a right format
+    //The following methods are used to check if a command message is in a correct format
+
     //For Register, Lock_Request, Lock_Denied, Lock_Allowed, Login and Register_Success_Broadcast
     public static boolean checkValidCommandFormat1(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("username")&&obj.containsKey("secret")){
@@ -298,7 +451,7 @@ public enum Command {
 
     //For Accepted
     public static boolean checkValidAccepted(JSONObject obj){
-        if (obj.containsKey("command")&& obj.containsKey("acceptedLamportTimeStamp")&& obj.containsKey("acceptedServerID")){
+        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
         return false;
@@ -314,7 +467,7 @@ public enum Command {
 
     //For Promise
     public static boolean checkValidPromise(JSONObject obj){
-        if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")&& obj.containsKey("acceptedLamportTimeStamp")
+        if (obj.containsKey("command")&& obj.containsKey("proposalLamportTimeStamp")&& obj.containsKey("proposalServerID")&& obj.containsKey("acceptedLamportTimeStamp")
                 && obj.containsKey("acceptedServerID")&& obj.containsKey("acceptedValue")){
             return true;
         }
@@ -330,10 +483,108 @@ public enum Command {
     }
 
     //For Propose
-    public static boolean checkValidPropose(JSONObject obj){
+    public static boolean checkValidSelection(JSONObject obj){
         if (obj.containsKey("command")&& obj.containsKey("lamportTimeStamp")&& obj.containsKey("serverID")){
             return true;
         }
         return false;
     }
+
+
+    // Check BUY_TICKET, PURCHASE_SUCCESS, PURCHASE_FAIL
+    public static boolean checkBuying(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("username")&& obj.containsKey("purchaseTime")){
+            return true;
+        }
+        return false;
+    }
+
+    //For Decide
+    public static boolean checkValidDecide(JSONObject obj){
+        if (obj.containsKey("command")&& obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
+
+    // Check REFUND_TICKET, REFUND_SUCCESS
+    public static boolean checkRefundTicket(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("trainNum")&& obj.containsKey("username")&& obj.containsKey("refundTime")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRefreshReq(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("username")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRefreshInfo(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("username")&& obj.containsKey("ticketInfo")&& obj.containsKey("purchaseInfo")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMultiAccept(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")&& obj.containsKey("value")&& obj.containsKey("firstUnchosenIndex")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidGetMissingLog(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("startIndex") && obj.containsKey("endIndex")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMissingLogInfo(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("values")&& obj.containsKey("startIndex") && obj.containsKey("endIndex")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidRelayMessage(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("message") && obj.containsKey("clientConnection")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMultiAccepted(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidMultiDecide(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")&& obj.containsKey("value")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidAskDBIndex(JSONObject obj){
+        if (obj.containsKey("command")){
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkValidReplyDBIndex(JSONObject obj){
+        if (obj.containsKey("command") && obj.containsKey("index")){
+            return true;
+        }
+        return false;
+    }
+
+
 }

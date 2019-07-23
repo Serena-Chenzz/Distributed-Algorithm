@@ -16,7 +16,9 @@ import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
-//Called when an Accept message is received from a Proposer
+// Called when an ACCEPT message is received from a Proposer
+// An ACCEPT message should contain:
+// the Proposal ID of this proposer and the proposed value
 public class Accept {
 
 	private static Connection conn;
@@ -28,28 +30,31 @@ public class Accept {
 
 		Accept.conn = con;
         try{
-			UniqueID proposalID, promisedID,acceptedID;
-			String acceptedValue;
+			UniqueID proposalID, promisedID;
 
 			JSONParser parser = new JSONParser();
 			JSONObject message = (JSONObject) parser.parse(msg);
 
+			// These two parts form the Proposal ID.
 			int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
-			int serverID = Integer.parseInt(message.get("serverID").toString());
+			String serverID = message.get("serverID").toString();
+
+			// The proposed value
 			String value = message.get("value").toString();
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();
-			acceptedID = Control.getInstance().getAccpetedID();
-			acceptedValue = Control.getInstance().getAccpetedValue();
 
+			// The algorithm works here
+			// If the local promised ID is greater, send NACK back
+			// else change local promised ID to this proposal ID, send ACCEPTED back
 			if (promisedID == null || proposalID.largerThan(promisedID)
 					|| proposalID.equals(promisedID)) {
-				Control.getInstance().setPromisedID(proposalID);
-				Control.getInstance().setAccpetedID(proposalID);
-				Control.getInstance().setAccpetedValue(value);
 
-				sendAccepted(acceptedID);
+				Control.getInstance().setPromisedID(proposalID);
+				Control.getInstance().setAcceptedID(proposalID);
+				Control.getInstance().setAcceptedValue(value);
+				sendAccepted(proposalID);
 			}
 			else {
 				sendNack(proposalID);
@@ -61,17 +66,19 @@ public class Accept {
 	}
 	
 	public void sendAccepted(UniqueID acceptedID) {
-		// Create the command and send back
+		// Create ACCEPTED and send back
 		String acceptedMsg = Command.createAccepted(acceptedID.getLamportTimeStamp(), acceptedID.getServerID());
 		conn.writeMsg(acceptedMsg);
 		log.debug(acceptedMsg);
+		log.info("Sending ACCEPTED to " + conn.getRemoteId());
 	}
-	
+
 	public void sendNack(UniqueID proposalID) {
-		// Create the command and send back
+		// Create NACK and send back
 		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
 		conn.writeMsg(nackMsg);
 		log.debug(nackMsg);
+		log.info("Sending NACK to " + conn.getRemoteId());
 
 	}
 

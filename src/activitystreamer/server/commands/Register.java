@@ -1,15 +1,10 @@
 package activitystreamer.server.commands;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-
 
 import activitystreamer.models.*;
 import activitystreamer.server.Connection;
@@ -25,11 +20,11 @@ public class Register {
     private static java.sql.Connection sqlConnection;
     private static final Logger log = LogManager.getLogger();
     private static boolean closeConnection=false;
-    private static final String sqlUrl =
-            "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/sqliteDB/UserTest.db";
-    
-    
-    public Register(String msg, Connection con) {
+    private static final String sqlUrl =Settings.getSqlUrl();
+
+    // Similar to BuyTicket Class, this class is used when a client wants to register into the system.
+    public Register(String msg, Connection con, int flag, int index) {
+        //Flag 1: From leader directly; Flag 2: From relayMsg; Flag 3: From other server's operation
         Register.conn = con;
         
          try {
@@ -37,40 +32,67 @@ public class Register {
 
             JSONParser parser = new JSONParser();
             JSONObject message = (JSONObject) parser.parse(msg);
-            //Read in the username and secret
-            String username = message.get("username").toString();
-            String secret =  message.get("secret").toString();
-            
+            String username;
+            String secret;
+            if(flag ==1 || flag ==3){
+                //Read in the username and secret
+                username = message.get("username").toString();
+                secret =  message.get("secret").toString();
+            }
+            else{
+                //Read in the username and secret
+                JSONObject relayMsg = (JSONObject) parser.parse(message.get("message").toString());
+                username = relayMsg.get("username").toString();
+                secret = relayMsg.get("secret").toString();
+            }
             //Check whether this user has been registered in the sqlite database
             String sqlQuery = "SELECT * FROM User WHERE UserName = '"+ username + "';";
             Statement stmt  = sqlConnection.createStatement();
             ResultSet result = stmt.executeQuery(sqlQuery);
 
-
             if(result.next()) {
-                //If this user has been registered, we directly send a register_failed
+                // If this user has been registered, we directly send a register_failed because we don't allow
+                // Duplicate username registration
                 log.info("This username has already been registered. Please try another username");
                 JSONObject registerFailed = Command.createRegisterFailed(username);
-                conn.writeMsg(registerFailed.toJSONString());
-                log.debug(registerFailed.toJSONString());
-                //The the connetion will be closed
-                closeConnection = true;
+                if(flag == 1){
+                    conn.writeMsg(registerFailed.toJSONString());
+                    log.debug(registerFailed.toJSONString());
+                    //Then the connection will be closed
+                    closeConnection = true;
+                }
+                else if(flag == 2){
+                    String clientConnection = message.get("clientConnection").toString();
+                    String relayMsg = Command.createRelayMsg(clientConnection,registerFailed.toJSONString());
+                    conn.writeMsg(relayMsg);
+                    log.debug(relayMsg);
+                    closeConnection = false;
+                }
+
             }
-            //If this server has no connected servers, it will skip the broadcast part. And return the register success method
             else {
-                //Add this user to registerList
-                String sqlInsert = "INSERT INTO User(UserName, UserPassword) VALUES(?,?)";
+                //Add this user to the local database and return register_success
+                String sqlInsert = "INSERT INTO User(UserId, UserName, UserPassword) VALUES(?,?,?)";
                 PreparedStatement pstmt = sqlConnection.prepareStatement(sqlInsert);
-                pstmt.setString(1, username);
-                pstmt.setString(2, secret);
+                pstmt.setInt(1, index);
+                pstmt.setString(2, username);
+                pstmt.setString(3, secret);
                 pstmt.executeUpdate();
                 log.info("Adding the user to the database");
 
                 JSONObject registerSuccess = Command.createRegisterSuccess(username);
-                conn.writeMsg(registerSuccess.toJSONString());
-                log.debug(registerSuccess.toJSONString());
-                //Adding user to list of users logged in
-                closeConnection = false;
+                if (flag == 1){
+                    conn.writeMsg(registerSuccess.toJSONString());
+                    log.debug(registerSuccess.toJSONString());
+                    closeConnection = false;
+                }
+                else if(flag == 2){
+                    String clientConnection = message.get("clientConnection").toString();
+                    String relayMsg = Command.createRelayMsg(clientConnection,registerSuccess.toJSONString());
+                    conn.writeMsg(relayMsg);
+                    log.debug(relayMsg);
+                    closeConnection = false;
+                }
             }
              sqlConnection.close();
 

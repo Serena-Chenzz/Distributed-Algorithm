@@ -19,7 +19,13 @@ public class Settings {
 	private static String secret = null;
 	private static String username = "anonymous";
 
+	// The following 2 sqlite urls need to be modified according to your own db address locally.
+	private static String sqlUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/Distributed-Algorithm/dbs/UserTest.db";
+	private static String sqlLogUrl = "jdbc:sqlite:/Users/luchen/Documents/Documents/Melb_Uni_Life/Semester4/Distributed Algorithm/Project/Distributed-Algorithm/dbs/log.db";
+    private static boolean initiateElection = false;
 
+    public static void setInitiateElection(String flag){if(flag.equals("true")){initiateElection = true;}}
+	public static boolean getInitiateElection(){return initiateElection;}
 	public static int getLocalPort() {
 		return localPort;
 	}
@@ -35,6 +41,10 @@ public class Settings {
 	public static int getRemotePort() {
 		return remotePort;
 	}
+
+	public static String getSqlUrl() {return sqlUrl;}
+
+	public static String getSqlLogUrl() {return sqlLogUrl;}
 
 	public static void setRemotePort(int remotePort) {
 		if(remotePort<0 || remotePort>65535){
@@ -88,11 +98,6 @@ public class Settings {
 		Settings.localHostname = localHostname;
 	}
 
-	
-	/*
-	 * some general helper functions
-	 */
-	
 	public static String socketAddress(Socket socket){
 		return socket.getInetAddress()+":"+socket.getPort();
 	}

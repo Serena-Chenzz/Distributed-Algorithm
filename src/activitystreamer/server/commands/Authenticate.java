@@ -17,6 +17,11 @@ public class Authenticate {
     private boolean closeConnection = false;
     private final Logger log = LogManager.getLogger();
 
+    // This class is used when a new server wants to connect to this server, this server needs to authenticate
+    // this new server in order to see if it is an authorised server. If so, the new server can continue to
+    // build connections with other servers. If no, the new server will receive Authentication_Fail and it will
+    // be aborted.
+
     public Authenticate(String msg, Connection con) {
         JSONParser parser = new JSONParser();
         JSONObject message;

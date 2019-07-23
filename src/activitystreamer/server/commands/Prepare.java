@@ -15,6 +15,13 @@ import activitystreamer.server.Connection;
 import activitystreamer.server.Control;
 import activitystreamer.util.Settings;
 
+// If the server receives this PREPARE message,
+// this means some other server(s) are making a selection.
+// Note that during one round of selection (Basic-Paxos),
+// each server has three roles: proposer, acceptor and learner
+// a proposer is a server that calls the sendSelection() method
+// but this server can also be an acceptor and a learner
+// This PREPARE message is handled by the acceptor part of a server.
 public class Prepare {
 
 	private static Connection conn;
@@ -22,32 +29,32 @@ public class Prepare {
 	private static boolean closeConnection=false;
 	
 	public Prepare(String msg, Connection con) {
-
+		Prepare.conn = con;
 		try{
-			UniqueID proposalID, promisedID,acceptedID;
+			UniqueID proposalID, promisedID;
 			String acceptedValue;
 
 			JSONParser parser = new JSONParser();
 			JSONObject message = (JSONObject) parser.parse(msg);
 
 			int lamportTimeStamp = Integer.parseInt(message.get("lamportTimeStamp").toString());
-			int serverID = Integer.parseInt(message.get("serverID").toString());
+			String serverID = message.get("serverID").toString();
 
 			proposalID = new UniqueID(lamportTimeStamp, serverID);
 			promisedID = Control.getInstance().getPromisedID();
-			acceptedID = Control.getInstance().getAccpetedID();
-			acceptedValue = Control.getInstance().getAccpetedValue();
+			acceptedValue = Control.getInstance().getacceptedValue();
 
-			if (promisedID != null && proposalID.equals(promisedID)) { // it is a duplicate message
-				sendPromise(proposalID, acceptedID, acceptedValue);
-			}
-			else if (promisedID == null || proposalID.largerThan(promisedID)) { // it is greater than promisedID, then change the promisedID
+
+			if (promisedID == null || proposalID.largerThan(promisedID)) {
+				// it is greater than promisedID, then change the promisedID record to this proposal ID
+				log.info("Prepare Phase Larger Than");
 				Control.getInstance().setPromisedID(proposalID);
-				sendPromise(proposalID, acceptedID, acceptedValue);
+				promisedID = proposalID;
+				sendPromise(proposalID, promisedID, acceptedValue);
 			}
-			else {
+			else
+				// This proposal ID is not large enough.
 				sendNack(proposalID);
-			}
 		}
 		catch (ParseException e) {
 			log.debug(e);
@@ -60,12 +67,14 @@ public class Prepare {
 				acceptedID.getLamportTimeStamp(), acceptedID.getServerID(),acceptedValue);
 		conn.writeMsg(promiseMsg);
 		log.debug(promiseMsg);
+		log.info("Sending PROMISE to " + conn.getRemoteId());
 	}
 	
 	public void sendNack(UniqueID proposalID) {
 		String nackMsg = Command.createNack(proposalID.getLamportTimeStamp(), proposalID.getServerID());
 		conn.writeMsg(nackMsg);
 		log.debug(nackMsg);
+		log.info("Sending NACK to " + conn.getRemoteId());
 	}
 
 	public boolean getCloseCon() {

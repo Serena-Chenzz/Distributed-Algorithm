@@ -12,6 +12,7 @@ import java.net.ConnectException;
 import java.net.SocketException;
 import java.util.logging.Level;
 
+import activitystreamer.models.Command;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,7 +21,7 @@ import activitystreamer.util.Settings;
 public class Connection extends Thread {
 
     private static final Logger log = LogManager.getLogger();
-    private static final long DISCONNECTION_TIME_LIMIT = 60000;  //60000 milliseconds
+    //private static final long DISCONNECTION_TIME_LIMIT = 1000;  //1000 milliseconds
     private DataInputStream in;
     private DataOutputStream out;
     private BufferedReader inreader;
@@ -28,7 +29,7 @@ public class Connection extends Thread {
     private boolean open = false;
     private Socket socket;
     private boolean term = false;
-    private String remoteId = "";
+    private String remoteId = ""; // The opposite server IP Address + Port
     //We record starting time to calculate the disconnection time
     private long timerStart = 0;
     
@@ -44,7 +45,6 @@ public class Connection extends Thread {
         outwriter = new PrintWriter(out, true);
         this.socket = socket;
         open = true;
-
         //remoteId = socket.getInetAddress() + ":" + socket.getPort();
         start();
     }
@@ -100,7 +100,6 @@ public class Connection extends Thread {
                 in.close();
                 socket.close();
             } catch (IOException e) {
-                // already closed?
                 log.error("received exception closing the connection " + Settings.socketAddress(socket) + ": " + e);
             }
         }
@@ -112,44 +111,55 @@ public class Connection extends Thread {
             try {
                 //If Control.process() returns true, then while loop finishes
                 while (!term && (data = inreader.readLine()) != null) {
-                    //reset the starting time
-                    this.timerStart = 0;
                     term = Control.getInstance().process(this, data);               
                 }
-//                if (getRemoteId().equals("10.0.0.42 5000") || getRemoteId().equals("10.0.0.42 3000")){
-//                    log.debug("Sleep");
-//                    try {
-//                        Thread.sleep(120000);
-//                        log.debug("Thread awake:" + getRemoteId());
-//                        term = false;
-//                        while (!term && (data = inreader.readLine()) != null) {
-//                            //reset the starting time
-//                            this.timerStart = 0;
-//                            term = Control.getInstance().process(this, data);               
-//                        }
-//                    } catch (InterruptedException ex) {
-//                        java.util.logging.Logger.getLogger(Connection.class.getName()).log(Level.SEVERE, null, ex);
-//                    } 
-//                }
                 Control.getInstance().connectionClosed(this);
                 closeCon();
             }
             catch (SocketException e){
+                // If there is any server gets crashed, all other servers will throw this exception
+                // But things can be a little different on Mac OS,
+                // because this exception works in different ways.
+
+                log.debug("socketException"+e.getMessage());
                 if (term){
                     open=false;
                 }
-                //log.error("connection error: " + e.toString());
-                //Start the timer
-                if (this.timerStart == 0){
-                    this.timerStart = System.currentTimeMillis();
-                }
-                else{
-                    long timerEnd = System.currentTimeMillis();
-                    if ((timerEnd - this.timerStart) > DISCONNECTION_TIME_LIMIT){
-                        //close the connection, regard the server is crashed
-                        open = false;
+
+                // Check if the crashed server is the leader. if so
+                if (remoteId.equals(Control.getInstance().getLeaderAddress()))
+                {
+                    log.info("Leader gets crushed.");
+
+                    // remove the local record of the leader address
+                    for (Connection connection:Control.getInstance().getNeighbors())
+                    {
+                        if(connection.remoteId.equals(Control.getInstance().getLeaderAddress()))
+                        {
+                            Control.getInstance().getNeighbors().remove(connection);
+                            Control.getInstance().setAcceptedValue(null);
+                            break;
+                        }
                     }
+
+                    // start a new selection proposal, with its own largest DB Index as the LamportTimeClock
+                    // So only the remained server with the global largest DB Index can win this selection
+                    // Under this circumstance, all servers will take part in this selection.
+                    Control.getInstance().clearAcceptor();
+                    Control.setLeaderHasBeenDecided(false);
+                    int myLargestIndexInDB = Control.getMyLargestDBIndex();
+                    if (Control.getInstance().getNeighbors().size() > 0) {
+                        log.info("Now making new selection.");
+                        Control.getInstance().sendSelection(myLargestIndexInDB);
+                    }
+                    else {
+                        Control.setLeaderAddress(Control.getInstance().getUniqueId());
+                        Control.setLeaderConnection(null);
+                    }
+
+                    Control.cleanUnChosenLogs();
                 }
+                open = false;
             }
             
             catch (IOException e) {
